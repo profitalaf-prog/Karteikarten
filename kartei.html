@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kartei – Karteikarten Lern-App</title>
+  <style>
+    :root {
+      --bg: #fafafa;
+      --surface: #ffffff;
+      --text: #111111;
+      --text-secondary: #555555;
+      --text-tertiary: #888888;
+      --text-quaternary: #aaaaaa;
+      --border: #e5e5e5;
+      --hover: #f5f5f5;
+      --accent: #2563eb;
+      --danger: #dc2626;
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 12px;
+      --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.05);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0a0a0a;
+        --surface: #141414;
+        --text: #f0f0f0;
+        --text-secondary: #aaaaaa;
+        --text-tertiary: #777777;
+        --text-quaternary: #555555;
+        --border: #2a2a2a;
+        --hover: #1f1f1f;
+        --accent: #3b82f6;
+        --danger: #ef4444;
+        --shadow: 0 1px 3px rgba(0,0,0,0.3), 0 4px 12px rgba(0,0,0,0.2);
+      }
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      padding: 24px 16px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 520px;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .header h1 {
+      font-size: 20px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+    .counter {
+      font-size: 13px;
+      color: var(--text-tertiary);
+      font-weight: 500;
+    }
+
+    /* Progress */
+    .progress-wrap {
+      height: 4px;
+      background: var(--border);
+      border-radius: 2px;
+      margin-bottom: 24px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: var(--text);
+      border-radius: 2px;
+      transition: width 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+
+    /* Card scene */
+    .scene {
+      perspective: 1000px;
+      margin-bottom: 24px;
+    }
+    .card {
+      position: relative;
+      width: 100%;
+      min-height: 280px;
+      transform-style: preserve-3d;
+      transition: transform 0.55s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+      cursor: pointer;
+    }
+    .card.flipped {
+      transform: rotateY(180deg);
+    }
+    .face {
+      position: absolute;
+      inset: 0;
+      backface-visibility: hidden;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border);
+      background: var(--surface);
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 32px;
+      text-align: center;
+    }
+    .face-back {
+      transform: rotateY(180deg);
+    }
+    .face-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-tertiary);
+      margin-bottom: 14px;
+    }
+    .face-text {
+      font-size: 22px;
+      font-weight: 600;
+      line-height: 1.4;
+      word-break: break-word;
+      color: var(--text);
+    }
+    .face-hint {
+      margin-top: 20px;
+      font-size: 12px;
+      color: var(--text-quaternary);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .face-hint svg {
+      width: 14px;
+      height: 14px;
+      opacity: 0.5;
+    }
+
+    /* Controls */
+    .controls {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 10px 18px;
+      border-radius: var(--radius-md);
+      font-size: 14px;
+      font-weight: 500;
+      border: none;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      font-family: inherit;
+      color: inherit;
+    }
+    .btn-primary {
+      background: var(--text);
+      color: var(--bg);
+    }
+    .btn-primary:hover { opacity: 0.85; transform: translateY(-1px); }
+    .btn-secondary {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn-secondary:hover { background: var(--hover); }
+    .btn-icon {
+      width: 40px;
+      height: 40px;
+      padding: 0;
+      border-radius: var(--radius-md);
+    }
+    .btn:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+      transform: none !important;
+    }
+
+    /* Editor */
+    .editor {
+      display: none;
+      margin-top: 16px;
+      padding: 20px;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border);
+      background: var(--surface);
+      box-shadow: var(--shadow);
+      animation: slideDown 0.25s ease;
+    }
+    .editor.open { display: block; }
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .editor-title {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 14px;
+    }
+    .field {
+      margin-bottom: 14px;
+    }
+    .field label {
+      display: block;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-tertiary);
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .field textarea {
+      width: 100%;
+      min-height: 64px;
+      padding: 12px 14px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+      font: inherit;
+      font-size: 15px;
+      resize: vertical;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .field textarea:focus {
+      border-color: var(--text);
+    }
+    .editor-actions {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+
+    /* List */
+    .list {
+      margin-top: 20px;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border);
+      background: var(--surface);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .list-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.15s;
+    }
+    .list-header:hover { background: var(--hover); }
+    .list-header span {
+      font-size: 14px;
+      font-weight: 600;
+    }
+    .list-toggle {
+      font-size: 12px;
+      color: var(--text-tertiary);
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .list-toggle svg {
+      width: 14px;
+      height: 14px;
+      transition: transform 0.2s;
+    }
+    .list-toggle.open svg { transform: rotate(180deg); }
+    .list-body {
+      display: none;
+      max-height: 280px;
+      overflow-y: auto;
+    }
+    .list-body.open { display: block; }
+    .list-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 18px;
+      border-bottom: 1px solid var(--border);
+      font-size: 14px;
+      transition: background 0.12s;
+      cursor: pointer;
+    }
+    .list-item:last-child { border-bottom: none; }
+    .list-item:hover { background: var(--hover); }
+    .list-item.active {
+      background: var(--hover);
+      font-weight: 600;
+    }
+    .list-item-text {
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      margin-right: 8px;
+      color: var(--text);
+    }
+    .list-item-num {
+      color: var(--text-quaternary);
+      font-weight: 500;
+      margin-right: 8px;
+      min-width: 24px;
+    }
+    .list-actions {
+      display: flex;
+      gap: 2px;
+      opacity: 0;
+      transition: opacity 0.15s;
+    }
+    .list-item:hover .list-actions { opacity: 1; }
+    .list-actions button {
+      width: 30px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: var(--radius-sm);
+      border: none;
+      background: none;
+      cursor: pointer;
+      color: var(--text-tertiary);
+      transition: all 0.12s;
+    }
+    .list-actions button:hover {
+      background: var(--border);
+      color: var(--text);
+    }
+    .list-actions button.delete:hover {
+      background: color-mix(in srgb, var(--danger) 12%, transparent);
+      color: var(--danger);
+    }
+
+    /* Empty */
+    .empty {
+      text-align: center;
+      padding: 48px 20px;
+      color: var(--text-tertiary);
+    }
+    .empty svg {
+      width: 48px;
+      height: 48px;
+      margin-bottom: 12px;
+      opacity: 0.35;
+    }
+    .empty p {
+      font-size: 14px;
+    }
+
+    /* Keyboard hint */
+    .keyboard-hint {
+      text-align: center;
+      margin-top: 12px;
+      font-size: 12px;
+      color: var(--text-quaternary);
+    }
+    .keyboard-hint kbd {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      font-family: inherit;
+      font-size: 11px;
+      margin: 0 2px;
+    }
+
+    @media (max-width: 480px) {
+      .face-text { font-size: 18px; }
+      .face { padding: 24px; min-height: 240px; }
+      .btn { padding: 9px 14px; font-size: 13px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .card { transition: none; }
+      .editor { animation: none; }
+    }
+  </style>
+<base target="_blank">
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>📚 Kartei</h1>
+      <div class="counter" id="counter">0 / 0</div>
+    </div>
+
+    <div class="progress-wrap">
+      <div class="progress-fill" id="progress" style="width:0%"></div>
+    </div>
+
+    <div class="scene" id="scene">
+      <div class="card" id="card">
+        <div class="face face-front">
+          <div class="face-label">Vorderseite</div>
+          <div class="face-text" id="frontText">Lade Karten...</div>
+          <div class="face-hint">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21h5v-5"/></svg>
+            Tippen oder Leertaste zum Umdrehen
+          </div>
+        </div>
+        <div class="face face-back">
+          <div class="face-label">Rückseite</div>
+          <div class="face-text" id="backText">...</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button class="btn btn-secondary btn-icon" id="btnPrev" title="Zurück (←)">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <button class="btn btn-primary" id="btnFlip">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21h5v-5"/></svg>
+        Umdrehen
+      </button>
+      <button class="btn btn-secondary btn-icon" id="btnNext" title="Weiter (→)">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
+    </div>
+
+    <div class="controls" style="gap:8px">
+      <button class="btn btn-secondary" id="btnAdd">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Neue Karte
+      </button>
+      <button class="btn btn-secondary" id="btnEdit">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        Bearbeiten
+      </button>
+    </div>
+
+    <div class="editor" id="editor">
+      <div class="editor-title" id="editorTitle">Karte bearbeiten</div>
+      <div class="field">
+        <label>Vorderseite</label>
+        <textarea id="inputFront" placeholder="Frage, Begriff oder Stichwort..."></textarea>
+      </div>
+      <div class="field">
+        <label>Rückseite</label>
+        <textarea id="inputBack" placeholder="Antwort, Definition oder Erklärung..."></textarea>
+      </div>
+      <div class="editor-actions">
+        <button class="btn btn-secondary" id="btnCancel">Abbrechen</button>
+        <button class="btn btn-primary" id="btnSave">Speichern</button>
+      </div>
+    </div>
+
+    <div class="list">
+      <div class="list-header" id="listHeader">
+        <span>Alle Karten</span>
+        <div class="list-toggle" id="listToggle">
+          Anzeigen
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+      </div>
+      <div class="list-body" id="listBody"></div>
+    </div>
+
+    <div class="keyboard-hint">
+      <kbd>←</kbd> <kbd>→</kbd> navigieren · <kbd>Leertaste</kbd> umdrehen · <kbd>Esc</kbd> schließen
+    </div>
+  </div>
+
+  <script>
+    // ═══════════════════════════════════════════════════════════════
+    //  DEINE KARTEN HIER EINTRAGEN
+    //  Format: { front: "Vorderseite", back: "Rückseite" }
+    // ═══════════════════════════════════════════════════════════════
+    const CARDS = [
+      // 1. Karte
+      { front: "Was ist die Hauptstadt von Frankreich?", back: "Paris" },
+      // 2. Karte
+      { front: "Wie viele Planeten hat unser Sonnensystem?", back: "Acht (seit 2006 ohne Pluto)" },
+      // 3. Karte
+      { front: "In welchem Jahr fiel die Berliner Mauer?", back: "1989" },
+      // 4. Karte
+      { front: "Was ist die chemische Formel für Wasser?", back: "H₂O" },
+      // 5. Karte
+      { front: "Wer schrieb 'Faust'?", back: "Johann Wolfgang von Goethe" },
+
+      // ↓↓↓ HIER WEITERE KARTEN HINZUFÜGEN ↓↓↓
+      // { front: "Deine Frage hier", back: "Deine Antwort hier" },
+    ];
+    // ═══════════════════════════════════════════════════════════════
+
+    let cards = [...CARDS];
+    let idx = 0;
+    let flipped = false;
+    let editing = -1;
+
+    const $ = id => document.getElementById(id);
+
+    function render() {
+      const cardEl = $('card');
+      const frontEl = $('frontText');
+      const backEl = $('backText');
+      const counterEl = $('counter');
+      const progressEl = $('progress');
+
+      if (cards.length === 0) {
+        cardEl.style.display = 'none';
+        counterEl.textContent = '0 / 0';
+        progressEl.style.width = '0%';
+        $('btnPrev').disabled = true;
+        $('btnNext').disabled = true;
+        $('btnEdit').disabled = true;
+        $('btnFlip').disabled = true;
+        renderList();
+        return;
+      }
+
+      cardEl.style.display = '';
+      flipped = false;
+      cardEl.classList.remove('flipped');
+      frontEl.textContent = cards[idx].front;
+      backEl.textContent = cards[idx].back;
+      counterEl.textContent = (idx + 1) + ' / ' + cards.length;
+      progressEl.style.width = ((idx + 1) / cards.length * 100) + '%';
+
+      $('btnPrev').disabled = idx === 0;
+      $('btnNext').disabled = idx === cards.length - 1;
+      $('btnEdit').disabled = false;
+      $('btnFlip').disabled = false;
+
+      renderList();
+    }
+
+    function renderList() {
+      const body = $('listBody');
+      if (cards.length === 0) {
+        body.innerHTML = `<div class="empty">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="9" y1="9" x2="15" y2="15"/><line x1="15" y1="9" x2="9" y2="15"/></svg>
+          <p>Noch keine Karten vorhanden.</p>
+        </div>`;
+        return;
+      }
+      body.innerHTML = cards.map((c, i) => {
+        const isActive = i === idx;
+        return `<div class="list-item ${isActive ? 'active' : ''}" onclick="jumpTo(${i})">
+          <span class="list-item-num">${i+1}.</span>
+          <span class="list-item-text">${escapeHtml(c.front)}</span>
+          <div class="list-actions" onclick="event.stopPropagation()">
+            <button onclick="editCard(${i})" title="Bearbeiten">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </button>
+            <button class="delete" onclick="deleteCard(${i})" title="Löschen">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            </button>
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    function escapeHtml(t) {
+      const d = document.createElement('div');
+      d.textContent = t;
+      return d.innerHTML;
+    }
+
+    function flip() {
+      if (cards.length === 0) return;
+      flipped = !flipped;
+      $('card').classList.toggle('flipped', flipped);
+    }
+
+    function prev() {
+      if (idx > 0) { idx--; render(); }
+    }
+    function next() {
+      if (idx < cards.length - 1) { idx++; render(); }
+    }
+
+    function openEditor(isNew) {
+      editing = isNew ? -1 : idx;
+      $('editorTitle').textContent = isNew ? 'Neue Karte' : 'Karte bearbeiten';
+      $('inputFront').value = isNew ? '' : cards[idx].front;
+      $('inputBack').value = isNew ? '' : cards[idx].back;
+      $('editor').classList.add('open');
+      $('inputFront').focus();
+    }
+
+    function closeEditor() {
+      $('editor').classList.remove('open');
+      editing = -1;
+    }
+
+    function saveCard() {
+      const f = $('inputFront').value.trim();
+      const b = $('inputBack').value.trim();
+      if (!f || !b) return;
+      if (editing === -1) {
+        cards.push({ front: f, back: b });
+        idx = cards.length - 1;
+      } else {
+        cards[editing] = { front: f, back: b };
+      }
+      closeEditor();
+      render();
+    }
+
+    function jumpTo(i) {
+      idx = i;
+      render();
+      $('scene').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    function editCard(i) {
+      idx = i;
+      render();
+      openEditor(false);
+    }
+
+    function deleteCard(i) {
+      if (!confirm('Karte "' + cards[i].front.substring(0, 40) + (cards[i].front.length > 40 ? '...' : '') + '" wirklich löschen?')) return;
+      cards.splice(i, 1);
+      if (idx >= cards.length) idx = Math.max(0, cards.length - 1);
+      render();
+    }
+
+    // Event listeners
+    $('card').addEventListener('click', flip);
+    $('btnFlip').addEventListener('click', flip);
+    $('btnPrev').addEventListener('click', prev);
+    $('btnNext').addEventListener('click', next);
+    $('btnAdd').addEventListener('click', () => openEditor(true));
+    $('btnEdit').addEventListener('click', () => openEditor(false));
+    $('btnCancel').addEventListener('click', closeEditor);
+    $('btnSave').addEventListener('click', saveCard);
+
+    // List toggle
+    let listOpen = false;
+    $('listHeader').addEventListener('click', () => {
+      listOpen = !listOpen;
+      $('listBody').classList.toggle('open', listOpen);
+      $('listToggle').classList.toggle('open', listOpen);
+      $('listToggle').childNodes[0].textContent = listOpen ? 'Ausblenden ' : 'Anzeigen ';
+    });
+
+    // Keyboard
+    document.addEventListener('keydown', e => {
+      if ($('editor').classList.contains('open')) {
+        if (e.key === 'Escape') closeEditor();
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') saveCard();
+        return;
+      }
+      if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); flip(); }
+      if (e.key === 'ArrowLeft') prev();
+      if (e.key === 'ArrowRight') next();
+    });
+
+    // Init
+    render();
+  </script>
+</body>
+</html>
