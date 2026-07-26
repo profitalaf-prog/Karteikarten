@@ -27,8 +27,6 @@
       display: flex; justify-content: center; padding: 24px 16px;
     }
     .container { width: 100%; max-width: 600px; }
-
-    /* ===== START SCREEN ===== */
     .start-screen { display: block; }
     .start-screen.hidden { display: none; }
     .start-header { text-align: center; margin-bottom: 32px; }
@@ -55,8 +53,6 @@
       padding: 4px 10px; border-radius: 20px;
     }
     .set-card .set-count svg { width: 14px; height: 14px; }
-
-    /* ===== LEARN SCREEN ===== */
     .learn-screen { display: none; }
     .learn-screen.active { display: block; }
     .learn-header {
@@ -72,10 +68,8 @@
     .learn-header .set-info { flex: 1; }
     .learn-header .set-info h2 { font-size: 16px; font-weight: 600; }
     .learn-header .set-info span { font-size: 12px; color: var(--text-tertiary); }
-
     .progress-wrap { height: 4px; background: var(--border); border-radius: 2px; margin-bottom: 24px; overflow: hidden; }
     .progress-fill { height: 100%; background: var(--text); border-radius: 2px; transition: width 0.35s cubic-bezier(0.25,0.46,0.45,0.94); }
-
     .scene { perspective: 1000px; margin-bottom: 24px; }
     .card {
       position: relative; width: 100%; min-height: 300px; transform-style: preserve-3d;
@@ -93,7 +87,6 @@
     .face-text { font-size: 17px; font-weight: 500; line-height: 1.5; word-break: break-word; color: var(--text); white-space: pre-wrap; }
     .face-hint { margin-top: 20px; font-size: 12px; color: var(--text-quaternary); display: flex; align-items: center; gap: 6px; }
     .face-hint svg { width: 14px; height: 14px; opacity: 0.5; }
-
     .controls { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 16px; }
     .btn {
       display: inline-flex; align-items: center; justify-content: center; gap: 6px;
@@ -106,7 +99,6 @@
     .btn-secondary:hover { background: var(--hover); }
     .btn-icon { width: 40px; height: 40px; padding: 0; }
     .btn:disabled { opacity: 0.3; cursor: not-allowed; transform: none !important; }
-
     .editor { display: none; margin-top: 16px; padding: 20px; border-radius: var(--radius-lg); border: 1px solid var(--border); background: var(--surface); box-shadow: var(--shadow); animation: slideDown 0.25s ease; }
     .editor.open { display: block; }
     @keyframes slideDown { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
@@ -116,7 +108,6 @@
     .field textarea { width: 100%; min-height: 64px; padding: 12px 14px; border-radius: var(--radius-md); border: 1px solid var(--border); background: var(--bg); color: var(--text); font: inherit; font-size: 15px; resize: vertical; outline: none; transition: border-color 0.15s; }
     .field textarea:focus { border-color: var(--text); }
     .editor-actions { display: flex; gap: 8px; justify-content: flex-end; }
-
     .list { margin-top: 20px; border-radius: var(--radius-lg); border: 1px solid var(--border); background: var(--surface); box-shadow: var(--shadow); overflow: hidden; }
     .list-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; border-bottom: 1px solid var(--border); cursor: pointer; user-select: none; transition: background 0.15s; }
     .list-header:hover { background: var(--hover); }
@@ -137,19 +128,16 @@
     .list-actions button { width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border-radius: var(--radius-sm); border: none; background: none; cursor: pointer; color: var(--text-tertiary); transition: all 0.12s; }
     .list-actions button:hover { background: var(--border); color: var(--text); }
     .list-actions button.delete:hover { background: color-mix(in srgb, var(--danger) 12%, transparent); color: var(--danger); }
-
     .keyboard-hint { text-align: center; margin-top: 12px; font-size: 12px; color: var(--text-quaternary); }
     .keyboard-hint kbd { display: inline-block; padding: 2px 6px; border-radius: 4px; border: 1px solid var(--border); background: var(--surface); font-family: inherit; font-size: 11px; margin: 0 2px; }
-
     @media (max-width: 480px) { .face-text { font-size: 15px; } .face { padding: 20px; min-height: 260px; } .btn { padding: 9px 14px; font-size: 13px; } .start-header h1 { font-size: 22px; } }
     @media (prefers-reduced-motion: reduce) { .card { transition: none; } .editor { animation: none; } }
   </style>
+  <base target="_blank">
 <base target="_blank">
 </head>
 <body>
   <div class="container">
-
-    <!-- ═════ START SCREEN ═════ -->
     <div class="start-screen" id="startScreen">
       <div class="start-header">
         <h1>📚 Bauspar-Tarife Kartei</h1>
@@ -157,8 +145,6 @@
       </div>
       <div class="sets-grid" id="setsGrid"></div>
     </div>
-
-    <!-- ═════ LEARN SCREEN ═════ -->
     <div class="learn-screen" id="learnScreen">
       <div class="learn-header">
         <button class="back-btn" id="btnBackToSets">
@@ -170,11 +156,7 @@
           <span id="learnCounter">0 / 0</span>
         </div>
       </div>
-
-      <div class="progress-wrap">
-        <div class="progress-fill" id="progress" style="width:0%"></div>
-      </div>
-
+      <div class="progress-wrap"><div class="progress-fill" id="progress" style="width:0%"></div></div>
       <div class="scene" id="scene">
         <div class="card" id="card">
           <div class="face face-front">
@@ -191,7 +173,6 @@
           </div>
         </div>
       </div>
-
       <div class="controls">
         <button class="btn btn-secondary btn-icon" id="btnPrev" title="Zurück (←)">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
@@ -204,7 +185,6 @@
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
         </button>
       </div>
-
       <div class="controls" style="gap:8px">
         <button class="btn btn-secondary" id="btnShuffle">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></svg>
@@ -215,7 +195,6 @@
           Neue Karte
         </button>
       </div>
-
       <div class="editor" id="editor">
         <div class="editor-title" id="editorTitle">Karte bearbeiten</div>
         <div class="field"><label>Vorderseite</label><textarea id="inputFront" placeholder="Frage, Begriff oder Stichwort..."></textarea></div>
@@ -225,7 +204,6 @@
           <button class="btn btn-primary" id="btnSave">Speichern</button>
         </div>
       </div>
-
       <div class="list">
         <div class="list-header" id="listHeader">
           <span>Alle Karten dieses Sets</span>
@@ -233,97 +211,145 @@
         </div>
         <div class="list-body" id="listBody"></div>
       </div>
-
       <div class="keyboard-hint">
         <kbd>←</kbd> <kbd>→</kbd> navigieren · <kbd>Leertaste</kbd> umdrehen · <kbd>S</kbd> mischen · <kbd>Esc</kbd> zurück
       </div>
     </div>
   </div>
-
   <script>
-    // ═══════════════════════════════════════════════════════════════
-    //  DEINE LERNBEREICHE / SETS
-    //  Kopiere einfach ein Set-Block und füge ihn unten ein.
-    //  Jedes Set braucht: title, subtitle, cards[]
-    // ═══════════════════════════════════════════════════════════════
     const SETS = {
-    set1: {
-      title: "SET 1: Kernbesonderheiten & Alleinstellungsmerkmale",
-      subtitle: "Die offizielle Besonderheit + Verkaufssatz",
-      cards: [
-        { front: "Tarif KOMPAKT – Was ist seine Kernbesonderheit / sein Alleinstellungsmerkmal?", back: "Kernbesonderheit: Einfacher Einstiegstarif mit einem gebundenen Sollzins von 1,75 %, einem Regelsparbeitrag von 5 ‰ und einer maximalen Bausparsumme von 60.000 €." },
-        { front: "Tarif KOMFORT – Was ist seine Kernbesonderheit / sein Alleinstellungsmerkmal?", back: "Kernbesonderheit: Individuelle Wahl zwischen zwei Geschwindigkeiten: Entweder 0,45 % Sollzins mit 10 ‰ Tilgung (schnell) ODER 1,95 % Sollzins mit 3,5 ‰ Tilgung (niedrige Rate)." },
-        { front: "Tarif PREMIUM – Was ist seine Kernbesonderheit / sein Alleinstellungsmerkmal?", back: "Kernbesonderheit: Bester Zins am Markt & kein Agio. Ab 100.000 € Bausparsumme gibt es einen gebundenen Sollzins von 1,25 %." },
-        { front: "Tarif TREND – Was ist seine Kernbesonderheit / sein Alleinstellungsmerkmal?", back: "Kernbesonderheit: Flexibler Marktzins. Sowohl der Guthabenzins (mind. 0,20 %) als auch der Darlehenszins passen sich der Marktentwicklung an." },
-        { front: "Tarif SPEZIAL – Was ist seine Kernbesonderheit / sein Alleinstellungsmerkmal?", back: "Kernbesonderheit: Exklusiv für große Volumen (Mindest-Bausparsumme 250.000 €) mit voller Flexibilität beim Zins- und Tilgungsbeitrag (frei wählbar zwischen 4,5 ‰ und 8 ‰)." },
-      ]
-    },
-    set2: {
-      title: "SET 2: Kunden-Personas",
-      subtitle: "Eine Geschichte pro Karte – passender Tarif finden",
-      cards: [
-        { front: "Anna (18) – Azubine, hat 50 € im Monat übrig, will einfach mal anfangen.", back: "→ KOMPAKT" },
-        { front: "Max (19) – Schüler, spart für den Führerschein / Erstausstattung, hat noch kein konkretes Bauvorhaben.", back: "→ KOMPAKT" },
-        { front: "Kevin (22) – Angestellter, kriegt VL vom Arbeitgeber, will erstmal Vermögen aufbauen.", back: "→ TREND" },
-        { front: "Sabine (29) – Alleinerziehend, möchte eine kleine Eigentumswohnung (ca. 120.000 €) kaufen.", back: "→ KOMPAKT" },
-        { front: "Familie Schmidt (32/30) – Will nächstes Jahr bauen, hat Angst vor steigenden Zinsen.", back: "→ PREMIUM" },
-        { front: "Familie Weber (40/42) – Besitzt ein Haus, will energetisch sanieren (Photovoltaik + Dämmung).", back: "→ KOMFORT" },
-        { front: "Herr Müller (55) – Besitzt ein Haus, will altersgerecht umbauen (Bad ebenerdig, Treppenlift).", back: "→ KOMFORT" },
-        { front: "Herr Fischer (60) – Kurz vor Rente, will sein bestehendes Darlehen ablösen (Anschlussfinanzierung).", back: "→ PREMIUM" },
-        { front: "Frau Dr. Wagner (50) – Besitzt 3 Mehrfamilienhäuser, braucht eine große Anschlussfinanzierung.", back: "→ SPEZIAL" },
-      ]
-    },
-    set3: {
-      title: "SET 3: Die Superlative",
-      subtitle: "Wer hat den niedrigsten Zins? Die höchste Summe?",
-      cards: [
-        { front: "Wer hat den niedrigsten gebundenen Sollzins?", back: "PREMIUM (1,25 % p.a. – ab 100.000 € BSS)" },
-        { front: "Wer hat den zweitniedrigsten gebundenen Sollzins?", back: "SPEZIAL (1,60 % p.a.)" },
-        { front: "Welcher Tarif hat den niedrigsten Zins- und Tilgungsbeitrag (niedrigste monatliche Belastung)?", back: "KOMFORT (3,5 ‰ in der Niedrig-Raten-Variante)" },
-        { front: "Welcher Tarif hat die höchste Mindest-Bausparsumme?", back: "SPEZIAL (250.000 €)" },
-        { front: "Welche Tarife haben kein Agio (0 % Bearbeitungsgebühr)?", back: "PREMIUM und SPEZIAL" },
-        { front: "Welcher Tarif ist der einzige mit variablen / marktabhängigen Zinsen?", back: "TREND (Guthaben- & Darlehenszins passen sich an)" },
-        { front: "Welcher Tarif hat die kleinste maximale Bausparsumme (Obergrenze)?", back: "KOMPAKT (max. 60.000 €)" },
-      ]
-    },
-    set4: {
-      title: "SET 4: Eselsbrücken",
-      subtitle: "Offizielle Kennzahlen mit Merkhilfen",
-      cards: [
-        { front: "Kompakt: Wie lautet der gebundene Sollzins und welcher Jugendbonus ist hier integriert?", back: "1,75 %" },
-        { front: "Komfort: Wie lautet der gebundene Sollzins in der Modernisierungsvariante (schnelle Tilgung)?", back: "0,45 %" },
-        { front: "Premium: Wie lautet der gebundene Sollzins und die Agio-Regelung ab 100.000 € BSS?", back: "1,25 % und 0 % Agio" },
-        { front: "Spezial: Wie lautet der gebundene Sollzins und die Mindest-Bausparsumme?", back: "1,60 % und 250.000 €" },
-        { front: "Trend: Wie verhalten sich Guthabenzins und Darlehenszins im Vergleich zum Markt?", back: "Sie passen sich an (marktabhängig)." },
-      ]
-    },
-    set5: {
-      title: "SET 5: Vertriebs-Matrix",
-      subtitle: "Kundenaussage → sofortige Tarifempfehlung",
-      cards: [
-        { front: "\"Ich hab keine Ahnung von Bausparen, will nur etwas Sicheres und Überschaubares.\"", back: "→ KOMPAKT" },
-        { front: "\"Ich bin 18 und möchte einfach mit kleinen Beträgen für meine Zukunft sparen.\"", back: "→ KOMPAKT" },
-        { front: "\"Ich will mein altes Haus fit machen und umbauen.\"", back: "→ KOMFORT" },
-        { front: "\"Ich will mein Haus barrierefrei umbauen, aber schnell abbezahlen.\"", back: "→ KOMFORT" },
-        { front: "\"Ich will bauen, aber die aktuellen Zinsen sind mir viel zu hoch!\"", back: "→ PREMIUM" },
-        { front: "\"Ich möchte meine Immobilie nach der 10-jährigen Zinsbindung ablösen.\"", back: "→ PREMIUM" },
-        { front: "\"Mein Chef gibt mir Vermögenswirksame Leistungen (VL).\"", back: "→ TREND" },
-        { front: "\"Ich möchte flexibel bleiben und von steigenden Guthabenzinsen profitieren.\"", back: "→ TREND" },
-        { front: "\"Ich bin selbstständig, habe ein hohes Einkommen und will ein Mehrfamilienhaus kaufen.\"", back: "→ SPEZIAL" },
-        { front: "\"Ich habe eine große Immobilie im Wert von 800.000 € zu finanzieren.\"", back: "→ SPEZIAL" },
-      ]
-    },
-      // ↓↓↓ HIER WEITERE SETS HINZUFÜGEN ↓↓↓
-      // set6: {
-      //   title: "SET 6: Mein neues Set",
-      //   subtitle: "Beschreibung hier",
-      //   cards: [
-      //     { front: "Frage", back: "Antwort" },
-      //   ]
-      // },
+      set1: {
+        title: "SET 1: Kernbesonderheiten & Alleinstellungsmerkmale",
+        subtitle: "Die offizielle Besonderheit + Verkaufssatz",
+        cards: [
+          { front: "Tarif KOMPAKT – Was ist seine Kernbesonderheit / sein Alleinstellungsmerkmal?", back: "Einfacher Einstiegstarif von Anfang bis Ende\n• Gebundener Sollzins: 1,75 %\n• Regelsparbeitrag: 5 \u2030\n• Maximale Bausparsumme: 60.000 \u20ac\n• Mindestsparguthaben: 50 %\n• Abschlussgeb\u00fchr: 1 %\n• Agio: 2 %\n• Ideal f\u00fcr Blankodarlehen\n• Jugendbonus integriert\n• Teilung m\u00f6glich" },
+          { front: "Tarif KOMFORT – Was ist seine Kernbesonderheit / sein Alleinstellungsmerkmal?", back: "Individuelle Wahl zwischen zwei Geschwindigkeiten:\n• Modernisierung: 0,45 % Sollzins + 10 \u2030 Tilgung (schnell)\n• Niedrige Rate: 1,95 % Sollzins + 3,5 \u2030 Tilgung (niedrige Belastung)\n• Variantenwechsel m\u00f6glich\n• Modernisierungsvorsorge\n• Teilungsm\u00f6glichkeit\n• Klimabonus\n• Blankodarlehen bis 75.000 \u20ac" },
+          { front: "Tarif PREMIUM – Was ist seine Kernbesonderheit / sein Alleinstellungsmerkmal?", back: "Bester Zins am Markt & kein Agio\n• Ab 100.000 \u20ac BSS: gebundener Sollzins nur 1,25 %\n• Keine Bearbeitungsgeb\u00fchr (0 % Agio)\n• Zinsrabatt ab 100.000 \u20ac Bausparsumme\n• Wohn-Riester m\u00f6glich\n• Schnelle Zuteilung\n• W\u00fcstenrot Wohnkonto Cash\n• Niedrigster Sollzins im Produktsegment" },
+          { front: "Tarif TREND – Was ist seine Kernbesonderheit / sein Alleinstellungsmerkmal?", back: "Flexibler Marktzins\n• Guthabenzins: mind. 0,20 %, max. 4,00 %\n• Darlehenszins passt sich an: mind. 2,69 %, max. 6,49 %\n• Generationenbonus\n• Staatliche F\u00f6rderung m\u00f6glich\n• Jugendbonus\n• F\u00fcr jede Zinslage geeignet" },
+          { front: "Tarif SPEZIAL – Was ist seine Kernbesonderheit / sein Alleinstellungsmerkmal?", back: "Exklusiv f\u00fcr gro\u00dfe Volumen\n• Mindest-Bausparsumme: 250.000 \u20ac\n• Gebundener Sollzins: 1,60 %\n• Kein Agio (0 %)\n• Zins- und Tilgungsbeitrag frei w\u00e4hlbar: 4,5 \u2030 \u2013 8 \u2030\n• Nur eine Zinsvariante\n• Sonderzahlungen und -tilgungen jederzeit m\u00f6glich\n• Marktgerechte Zuteilungszeiten\n• Mindestsparzeit: 36 Monate" },
+        ]
+      },
+      set2: {
+        title: "SET 2: Kunden-Personas",
+        subtitle: "Eine Geschichte pro Karte \u2013 passender Tarif finden",
+        cards: [
+          { front: "Anna (18) \u2013 Azubine, hat 50 \u20ac im Monat \u00fcbrig, will einfach mal anfangen.", back: "\u2192 KOMPAKT\n(Einfacher Einstieg, kleine Betr\u00e4ge, Jugendbonus)" },
+          { front: "Max (19) \u2013 Sch\u00fcler, spart f\u00fcr den F\u00fchrerschein / Erstausstattung, hat noch kein konkretes Bauvorhaben.", back: "\u2192 KOMPAKT\n(Verm\u00f6gensaufbau, unentschlossener Sparer, Jugendbonus)" },
+          { front: "Kevin (22) \u2013 Angestellter, kriegt VL vom Arbeitgeber, will erstmal Verm\u00f6gen aufbauen.", back: "\u2192 TREND\n(VL-Sparer, flexibler Marktzins, staatliche F\u00f6rderung)" },
+          { front: "Sabine (29) \u2013 Alleinerziehend, m\u00f6chte eine kleine Eigentumswohnung (ca. 120.000 \u20ac) kaufen.", back: "\u2192 PREMIUM\n(Gr\u00f6\u00dfere Summe, bester Zins ab 100k, Zins sichern)" },
+          { front: "Familie Schmidt (32/30) \u2013 Will n\u00e4chstes Jahr bauen, hat Angst vor steigenden Zinsen.", back: "\u2192 PREMIUM\n(Zinssicherung, niedrigster Sollzins 1,25 %, kein Agio)" },
+          { front: "Familie Weber (40/42) \u2013 Besitzt ein Haus, will energetisch sanieren (Photovoltaik + D\u00e4mmung).", back: "\u2192 KOMFORT\n(Modernisierungsvariante 0,45 %, Klimabonus)" },
+          { front: "Herr M\u00fcller (55) \u2013 Besitzt ein Haus, will altersgerecht umbauen (Bad ebenerdig, Treppenlift).", back: "\u2192 KOMFORT\n(Modernisierung oder niedrige Rate, Generation 50+)" },
+          { front: "Herr Fischer (60) \u2013 Kurz vor Rente, will sein bestehendes Darlehen abl\u00f6sen (Anschlussfinanzierung).", back: "\u2192 PREMIUM\n(Anschlussfinanzierer, niedrige Zinsen, Wohn-Riester)" },
+          { front: "Frau Dr. Wagner (50) \u2013 Besitzt 3 Mehrfamilienh\u00e4user, braucht eine gro\u00dfe Anschlussfinanzierung.", back: "\u2192 SPEZIAL\n(Gro\u00dfvolumen ab 250.000 \u20ac, Investor, gewerblich)" },
+        ]
+      },
+      set3: {
+        title: "SET 3: Die Superlative",
+        subtitle: "Wer hat den niedrigsten Zins? Die h\u00f6chste Summe?",
+        cards: [
+          { front: "Wer hat den niedrigsten gebundenen Sollzins?", back: "PREMIUM (1,25 % p.a. \u2013 ab 100.000 \u20ac BSS)\nBei < 100.000 \u20ac: 1,50 %" },
+          { front: "Wer hat den zweitniedrigsten gebundenen Sollzins?", back: "SPEZIAL (1,60 % p.a.)" },
+          { front: "Welcher Tarif hat den niedrigsten Zins- und Tilgungsbeitrag (niedrigste monatliche Belastung)?", back: "KOMFORT \u2013 Niedrige-Rate-Variante (3,5 \u2030)\nAlternativ: 3 \u2030 bei 1,95 % Darlehenszins" },
+          { front: "Welcher Tarif hat die h\u00f6chste Mindest-Bausparsumme?", back: "SPEZIAL (250.000 \u20ac)" },
+          { front: "Welche Tarife haben kein Agio (0 % Bearbeitungsgeb\u00fchr)?", back: "PREMIUM und SPEZIAL" },
+          { front: "Welcher Tarif ist der einzige mit variablen / marktabh\u00e4ngigen Zinsen?", back: "TREND\n(Guthabenzins 0,20\u20134,00 %, Darlehenszins 2,69\u20136,49 %)" },
+          { front: "Welcher Tarif hat die kleinste maximale Bausparsumme (Obergrenze)?", back: "KOMPAKT (max. 60.000 \u20ac)" },
+          { front: "Welcher Tarif hat den h\u00f6chsten Guthabenzins (maximal m\u00f6glich)?", back: "TREND (max. 4,00 % j\u00e4hrlich)" },
+          { front: "Welcher Tarif hat die l\u00e4ngste maximale Tilgungsdauer?", back: "KOMFORT \u2013 Niedrige Rate (17 Jahre, 2 Monate)" },
+          { front: "Welcher Tarif hat die k\u00fcrzeste maximale Tilgungsdauer?", back: "KOMFORT \u2013 Modernisierung (5 Jahre, 3 Monate)" },
+        ]
+      },
+      set4: {
+        title: "SET 4: Eselsbr\u00fccken & Kennzahlen",
+        subtitle: "Offizielle Tarifmerkmale mit Merkhilfen",
+        cards: [
+          { front: "Kompakt: Wie lauten Sollzins, Guthabenzins, max. BSS und Mindestsparguthaben?", back: "• Sollzins: 1,75 %\n• Guthabenzins: 0,20 %\n• Maximale BSS: 60.000 \u20ac\n• Mindestsparguthaben: 50 %\n• Agio: 2 %\n• Effektiver Jahreszins: 2,49 %" },
+          { front: "Komfort: Wie lauten die beiden Sollzins-Varianten und die dazugeh\u00f6rigen Tilgungsbeitr\u00e4ge?", back: "Modernisierung:\n• Sollzins: 0,45 %\n• Tilgungsbeitrag: 10 \u2030\n• Agio: 2 %\n• Tilgungsdauer: 5 J. 3 M.\n• Eff. Jahreszins: 1,99 %\n\nNiedrige Rate:\n• Sollzins: 1,95 %\n• Tilgungsbeitrag: 3,5 \u2030\n• Agio: 1 %\n• Tilgungsdauer: 17 J. 2 M.\n• Eff. Jahreszins: 2,38 %" },
+          { front: "Premium: Wie lautet der Sollzins ab 100.000 \u20ac BSS und welche Agio-Regelung gilt?", back: "Ab 100.000 \u20ac BSS:\n• Sollzins: 1,25 %\n• Agio: 0 % (keines!)\n\nUnter 100.000 \u20ac:\n• Sollzins: 1,50 %\n• Agio: 0 %\n\nWohn-Riester:\n• Abschlussgeb\u00fchr 1 % verteilt auf 5 J.\n• Variantenpreis 0,5 % verteilt auf 5 J.\n• Kontogeb\u00fchr: 20 \u20ac/Jahr" },
+          { front: "Spezial: Wie lauten Sollzins, Mindest-BSS und die Tilgungsbeitrags-Spanne?", back: "• Sollzins: 1,60 %\n• Mindest-BSS: 250.000 \u20ac\n• Tilgungsbeitrag: 4,5 \u2030 \u2013 8 \u2030\n• Agio: 0 % (keines!)\n• Mindestsparzeit: 36 Monate\n• Eff. Jahreszins: 1,99 % (4,5 \u2030) \u2013 2,30 % (8 \u2030)" },
+          { front: "Trend: Wie verhalten sich Guthaben- und Darlehenszins im Vergleich zum Markt?", back: "• Guthabenzins: mind. 0,20 %, max. 4,00 %\n• Darlehenszins: mind. 2,69 %, max. 6,49 %\n• Beide passen sich der Marktentwicklung an!\n• Agio: 2 %\n• Regelsparbeitrag: 5 \u2030" },
+          { front: "Wie hoch ist die durchschnittliche Mietersparnis f\u00fcr Rentner mit Wohneigentum?", back: "669 \u20ac pro Monat\nDas entspricht 35 % ihrer gesetzlichen Rente\n(Steinerne Zusatzrente)" },
+          { front: "Wie hoch ist das durchschnittliche Nettoverm\u00f6gen von Eigent\u00fcmern vs. Mietern (50\u201359 J., Einkommen 1.700\u20132.300 \u20ac)?", back: "Eigent\u00fcmer: 166.000 \u20ac\nMieter: 30.000 \u20ac\n\u2192 Eigent\u00fcmer haben mehr als das F\u00fcnffache!" },
+          { front: "Wie viel Ersparnis bringt Wohnsparen im Vergleich zu reiner Immobilienfinanzierung (Beispiel 400.000 \u20ac)?", back: "Ohne Vorsparen: 697.278 \u20ac Gesamtkosten\nMit Wohnsparen: 480.036 \u20ac Gesamtkosten\n\u2192 Ersparnis: 217.242 \u20ac!" },
+        ]
+      },
+      set5: {
+        title: "SET 5: Vertriebs-Matrix",
+        subtitle: "Kundenaussage \u2192 sofortige Tarifempfehlung",
+        cards: [
+          { front: "\u201cIch hab keine Ahnung von Bausparen, will nur etwas Sicheres und \u00dcberschaubares.\u201d", back: "\u2192 KOMPAKT\n(Einfach von Anfang bis Ende, keine \u00dcberfrachtung)" },
+          { front: "\u201cIch bin 18 und m\u00f6chte einfach mit kleinen Betr\u00e4gen f\u00fcr meine Zukunft sparen.\u201d", back: "\u2192 KOMPAKT\n(Jugendbonus, einfacher Einstieg, 50 \u20ac/Monat m\u00f6glich)" },
+          { front: "\u201cIch will mein altes Haus fit machen und umbauen.\u201d", back: "\u2192 KOMFORT\n(Modernisierungsvariante 0,45 %, Klimabonus)" },
+          { front: "\u201cIch will mein Haus barrierefrei umbauen, aber schnell abbezahlen.\u201d", back: "\u2192 KOMFORT\n(Modernisierung: 0,45 % + 10 \u2030 = schnelle Tilgung)" },
+          { front: "\u201cIch will bauen, aber die aktuellen Zinsen sind mir viel zu hoch!\u201d", back: "\u2192 PREMIUM\n(1,25 % ab 100k \u2013 niedrigster Sollzins, Zins sichern)" },
+          { front: "\u201cIch m\u00f6chte meine Immobilie nach der 10-j\u00e4hrigen Zinsbindung abl\u00f6sen.\u201d", back: "\u2192 PREMIUM\n(Anschlussfinanzierer, kein Agio, Wohn-Riester)" },
+          { front: "\u201cMein Chef gibt mir Verm\u00f6genswirksame Leistungen (VL).\u201d", back: "\u2192 TREND\n(VL und WoP Sparer, staatliche F\u00f6rderung)" },
+          { front: "\u201cIch m\u00f6chte flexibel bleiben und von steigenden Guthabenzinsen profitieren.\u201d", back: "\u2192 TREND\n(Guthabenzins bis 4 %, marktabh\u00e4ngig)" },
+          { front: "\u201cIch bin selbstst\u00e4ndig, habe ein hohes Einkommen und will ein Mehrfamilienhaus kaufen.\u201d", back: "\u2192 SPEZIAL\n(250.000 \u20ac Mindest-BSS, Investor, gewerblich)" },
+          { front: "\u201cIch habe eine gro\u00dfe Immobilie im Wert von 800.000 \u20ac zu finanzieren.\u201d", back: "\u2192 SPEZIAL\n(Gro\u00dfprojekt, flexible Tilgung 4,5\u20138 \u2030, kein Agio)" },
+        ]
+      },
+      set6: {
+        title: "SET 6: Tarifdetails Kompakt",
+        subtitle: "Alle offiziellen Kennzahlen aus dem Tarifblatt",
+        cards: [
+          { front: "Kompakt \u2013 Sparphase: Guthabenzins, Mindest-BSS, max. BSS, Mindestsparguthaben?", back: "• Guthabenzins: 0,20 % p.a.\n• Mindest-BSS: 10.000 \u20ac\n• Maximale BSS: 60.000 \u20ac\n• Mindestsparguthaben: 50 % der BSS\n• Regelsparbeitrag: 5 \u2030 der BSS\n• Abschlussgeb\u00fchr: 1 % der BSS" },
+          { front: "Kompakt \u2013 Darlehensphase: Sollzins, Agio, Tilgungsbeitrag, Tilgungsdauer?", back: "• Sollzins gebunden: 1,75 % p.a.\n• Agio: 2 % des Anfangsdarlehens\n• Zins- und Tilgungsbeitrag: 5 \u2030\n• Maximale Tilgungsdauer: 9 Jahre, 5 Monate\n• Effektiver Jahreszins: 2,49 %" },
+          { front: "Kompakt \u2013 Zielgruppen und besondere Hinweise?", back: "Zielgruppen:\n• Junge Leute\n• Unentschlossene Sparer\n• Generation 50+\n\nBesonderheiten:\n• Jugendbonus\n• Ideal f\u00fcr Blankodarlehen\n• Teilung m\u00f6glich\n• Kein Grundbucheintrag n\u00f6tig" },
+        ]
+      },
+      set7: {
+        title: "SET 7: Tarifdetails Komfort",
+        subtitle: "Zwei Varianten: Modernisierung & Niedrige Rate",
+        cards: [
+          { front: "Komfort \u2013 Sparphase: Guthabenzins, Mindest-BSS, Mindestsparguthaben, Regelsparbeitrag?", back: "• Guthabenzins: 0,01 % p.a.\n• Mindest-BSS: 10.000 \u20ac\n• Mindestsparguthaben: 40 % der BSS\n• Regelsparbeitrag: 3 \u2030 (1,95 % Darlehenszins)\n  oder 6 \u2030 (0,45 % Darlehenszins)\n• Abschlussgeb\u00fchr: 1 % der BSS\n• Variantenpreis: 0,6 % der BSS" },
+          { front: "Komfort \u2013 Modernisierung: Sollzins, Agio, Tilgungsbeitrag, Tilgungsdauer, Effektivzins?", back: "• Sollzins: 0,45 % p.a.\n• Agio: 2 %\n• Zins- und Tilgungsbeitrag: 10 \u2030\n• Maximale Tilgungsdauer: 5 Jahre, 3 Monate\n• Effektiver Jahreszins: 1,99 %" },
+          { front: "Komfort \u2013 Niedrige Rate: Sollzins, Agio, Tilgungsbeitrag, Tilgungsdauer, Effektivzins?", back: "• Sollzins: 1,95 % p.a.\n• Agio: 1 %\n• Zins- und Tilgungsbeitrag: 3,5 \u2030\n• Maximale Tilgungsdauer: 17 Jahre, 2 Monate\n• Effektiver Jahreszins: 2,38 %" },
+          { front: "Komfort \u2013 Zielgruppen und besondere Hinweise?", back: "Zielgruppen:\n• Kunden mit Wohneigentum\n• Modernisierer\n• Generation 50+\n• Anschlussfinanzierer\n\nBesonderheiten:\n• Variantenwechsel m\u00f6glich\n• Modernisierungsvorsorge\n• W\u00fcstenrot Wohnkonto Cash\n• Klimabonus\n• Blankodarlehen bis 75.000 \u20ac" },
+        ]
+      },
+      set8: {
+        title: "SET 8: Tarifdetails Premium",
+        subtitle: "Bester Zins & kein Agio \u2013 mit Wohn-Riester",
+        cards: [
+          { front: "Premium \u2013 Sparphase: Guthabenzins, Mindest-BSS, Mindestsparguthaben, Regelsparbeitrag?", back: "• Guthabenzins: 0,01 % p.a.\n• Mindest-BSS: 10.000 \u20ac\n• Mindestsparguthaben:\n  \u2013 30 % bei Sollzins 2,25 %/2,00 %\n  \u2013 40 % bei Sollzins 1,50 %/1,25 %\n• Regelsparbeitrag: 5 \u2030 der BSS\n• Abschlussgeb\u00fchr: 1 % (bei Riester auf 5 J. verteilt)\n• Variantenpreis: 0,6 % (bei Riester 0,5 % auf 5 J.)\n• Kontogeb\u00fchr: 20 \u20ac/Jahr (nur Sparphase, bei Riester)" },
+          { front: "Premium \u2013 Darlehensphase BSS < 100.000 \u20ac: Sollzins, Agio, Tilgungsdauer, Effektivzins?", back: "• Sollzins: 1,50 % / 2,25 %\n• Agio: Nein (0 %)\n• Zins- und Tilgungsbeitrag: 4 \u2013 8 \u2030\n• Tilgungsdauer: 14 J. / 17 J. 11 M.\n• Eff. Jahreszins: 1,85\u20132,20 % / 2,54\u20132,84 %\n• Wohn-Riester: 1,82\u20132,14 % / 2,52\u20132,81 %" },
+          { front: "Premium \u2013 Darlehensphase BSS \u2265 100.000 \u20ac: Sollzins, Agio, Tilgungsdauer, Effektivzins?", back: "• Sollzins: 1,25 % / 2,00 %\n• Agio: Nein (0 %)\n• Zins- und Tilgungsbeitrag: 4 \u2013 8 \u2030\n• Tilgungsdauer: 13 J. 9 M. / 17 J. 6 M.\n• Eff. Jahreszins: 1,59\u20131,93 % / 2,29\u20132,58 %\n• Wohn-Riester: 1,57\u20131,88 % / 2,27\u20132,54 %" },
+          { front: "Premium \u2013 Zielgruppen und besondere Hinweise?", back: "Zielgruppen:\n• Perspektivsparer / Miete in die eigene Tasche\n• Anschlussfinanzierer\n• Modernisierer\n\nBesonderheiten:\n• G\u00fcnstigstes Darlehen ohne Agio\n• Zinsrabatt ab 100.000 \u20ac BSS\n• Wohn-Riester m\u00f6glich\n• Schnelle Zuteilung\n• W\u00fcstenrot Wohnkonto Cash" },
+        ]
+      },
+      set9: {
+        title: "SET 9: Tarifdetails Trend",
+        subtitle: "Flexibler Marktzins \u2013 f\u00fcr jede Zinslage",
+        cards: [
+          { front: "Trend \u2013 Sparphase: Guthabenzins, Mindest-BSS, Mindestsparguthaben, Regelsparbeitrag?", back: "• Guthabenzins: mind. 0,20 %, max. 4,00 % p.a.\n• Mindest-BSS: 10.000 \u20ac\n• Mindestsparguthaben: 40 % der BSS\n• Regelsparbeitrag: 5 \u2030 der BSS\n• Abschlussgeb\u00fchr: 1 % der BSS" },
+          { front: "Trend \u2013 Darlehensphase: Sollzins, Agio, Tilgungsbeitrag, Effektivzins?", back: "• Sollzins: abh\u00e4ngig vom Guthabenzins\n  mind. 2,69 %, max. 6,49 % p.a.\n• Agio: 2 % des Anfangsdarlehens\n• Zins- und Tilgungsbeitrag: 5 \u2030 der BSS\n• Maximale Tilgungsdauer: abh\u00e4ngig vom Sollzins\n• Effektiver Jahreszins: mind. 3,33 %, max. 7,26 %" },
+          { front: "Trend \u2013 Zielgruppen und besondere Hinweise?", back: "Zielgruppen:\n• VL und WoP Sparer\n• Junge Leute (Verm\u00f6gensaufbau)\n• Generation 50+\n\nBesonderheiten:\n• Generationenbonus\n• Staatliche F\u00f6rderung m\u00f6glich\n• Jugendbonus\n• Passt sich allen Zinslagen an\n• Sonderzins m\u00f6glich (entf\u00e4llt bei K\u00fcndigung innerhalb 7 J.)" },
+        ]
+      },
+      set10: {
+        title: "SET 10: Tarifdetails Spezial",
+        subtitle: "Nur f\u00fcr gro\u00dfe Summen ab 250.000 \u20ac",
+        cards: [
+          { front: "Spezial \u2013 Sparphase: Guthabenzins, Mindest-BSS, Mindestsparguthaben, Mindestsparzeit?", back: "• Guthabenzins: 0,01 % p.a.\n• Mindest-BSS: 250.000 \u20ac\n• Mindestsparguthaben: 40 % der BSS\n• Regelsparbeitrag: 5 \u2030 der BSS\n• Mindestsparzeit: 36 Monate\n• Abschlussgeb\u00fchr: 1 % der BSS\n• Variantenpreis: 0,6 % der BSS\n• Vertrags\u00e4nderungen: m\u00f6glich (Teilung ab 50.000 \u20ac)" },
+          { front: "Spezial \u2013 Darlehensphase: Sollzins, Agio, Tilgungsbeitrag, Tilgungsdauer, Effektivzins?", back: "• Sollzins: 1,60 % p.a.\n• Agio: Keines (0 %)\n• Zins- und Tilgungsbeitrag: 4,5 \u2030 \u2013 8 \u2030\n• Tilgungsdauer:\n  \u2013 12 J. 5 M. (bei 4,5 \u2030)\n  \u2013 6 J. 9 M. (bei 8 \u2030)\n• Eff. Jahreszins: 1,99 % (4,5 \u2030) \u2013 2,30 % (8 \u2030)" },
+          { front: "Spezial \u2013 Zielgruppen und besondere Hinweise?", back: "Zielgruppen:\n• Verm\u00f6gende Kunden\n• WEGs\n• Unternehmen (Arbeitgeber)\n• Kommunen\n• Baugenossenschaften\n• Banken\n\nBesonderheiten:\n• Nur eine Zinsvariante\n• Sonderzahlungen und -tilgungen jederzeit m\u00f6glich\n• Marktgerechte Zuteilungszeiten\n• Planbarkeit und preiswerte Zinssicherung" },
+        ]
+      },
+      set11: {
+        title: "SET 11: Perspektivsparen Grundlagen",
+        subtitle: "Die 3 Phasen, Vorteile und Kundenw\u00fcnsche",
+        cards: [
+          { front: "Was sind die 3 Phasen des Wohnsparens?", back: "1. Sparphase:\n   Einzahlungen bis Mindestsparguthaben\n   (40\u201350 % der Bausparsumme)\n\n2. Zuteilungsphase:\n   Vertrag wird zuteilungsreif\n   Guthaben + Anspruch auf Darlehen\n\n3. Darlehensphase:\n   R\u00fcckzahlung in monatlichen Raten\n   Zinssatz wurde bei Vertragsabschluss festgelegt!" },
+          { front: "Was bedeutet \u201cPerspektivsparen\u201d? Warum Wohnsparen?", back: "Wohnsparen = gesamte Finanzierungskosten sinken deutlich\n\nKundenw\u00fcnsche:\n• Wohnen nach eigenen W\u00fcnschen\n• Unk\u00fcndbarkeit der Immobilie\n• Keine Mietsteigerung\n• Miete \u201cin die eigene Tasche\u201d\n• Altersvorsorge: mietfrei im Alter wohnen" },
+          { front: "Wie hoch ist die \u201cSteinerne Zusatzrente\u201d?", back: "Rentnerhaushalte mit Wohneigentum:\n• Durchschnittliche Rente: 1.930 \u20ac\n• Durchschnittliche Mietersparnis: 669 \u20ac/Monat\n• Das sind 35 % der gesetzlichen Rente!\n\nWohneigentum wirkt wie eine zus\u00e4tzliche Rente." },
+          { front: "Wie gro\u00df ist der Verm\u00f6gensunterschied zwischen Eigent\u00fcmern und Mietern?", back: "50\u201359 J\u00e4hrige mit 1.700\u20132.300 \u20ac Nettoeinkommen:\n\nMieter:\n• Immobilienwert: 6.000 \u20ac\n• Geldverm\u00f6gen: 24.000 \u20ac\n• Gesamt: 30.000 \u20ac\n\nEigent\u00fcmer:\n• Immobilienwert: 120.000 \u20ac\n• Geldverm\u00f6gen: 45.000 \u20ac\n• Gesamt: 166.000 \u20ac\n\n\u2192 Mehr als das F\u00fcnffache!" },
+          { front: "Wie funktioniert der Hebel des Wohnsparens (Beispiel 400.000 \u20ac)?", back: "Ohne Vorsparen:\n• 400.000 \u20ac Darlehen zu 5,10 %\n• Rate: 2.400 \u20ac/Monat\n• 24 Jahre Laufzeit\n• Gesamtkosten: 697.278 \u20ac\n\nMit Wohnsparen:\n• 200.000 \u20ac Immobiliendarlehen (4,35 %)\n• 120.000 \u20ac Bauspardarlehen (1,25 %)\n• 80.000 \u20ac angespartes Guthaben\n• Gesamtbelastung: ~2.470 \u20ac/Monat\n• ~14 Jahre Laufzeit\n• Gesamtkosten: 480.036 \u20ac\n\n\u2192 Ersparnis: 217.242 \u20ac!" },
+          { front: "Welche Kunden-Personas gibt es und welche Bed\u00fcrfnisse haben sie?", back: "1. Die Sch\u00fclerin: Sparen mit Extra-Plus vom Staat\n2. Der Azubi: Mit VL Geld ansparen\n3. Junges Paar mit Kindern: Traum vom Haus\n4. Paar mittleren Alters: Haus geerbt und modernisieren\n5. \u00c4lteres Paar: Altersgerecht umbauen" },
+        ]
+      },
     };
-    // ═══════════════════════════════════════════════════════════════
-
     let currentSetId = null;
     let cards = [];
     let idx = 0;
@@ -332,7 +358,6 @@
 
     const $ = id => document.getElementById(id);
 
-    // ═════ START SCREEN ═════
     function renderStartScreen() {
       const grid = $('setsGrid');
       grid.innerHTML = Object.entries(SETS).map(([id, s]) => `
@@ -366,7 +391,6 @@
       cards = []; idx = 0; flipped = false;
     }
 
-    // ═════ LEARN SCREEN ═════
     function render() {
       const cardEl = $('card'), frontEl = $('frontText'), backEl = $('backText');
       const counterEl = $('learnCounter'), progressEl = $('progress');
@@ -412,7 +436,7 @@
             <button onclick="editCard(${i})" title="Bearbeiten">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
             </button>
-            <button class="delete" onclick="deleteCard(${i})" title="Löschen">
+            <button class="delete" onclick="deleteCard(${i})" title="L\u00f6schen">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
             </button>
           </div>
@@ -445,13 +469,12 @@
     function jumpTo(i) { idx = i; render(); $('scene').scrollIntoView({ behavior: 'smooth', block: 'center' }); }
     function editCard(i) { idx = i; render(); openEditor(false); }
     function deleteCard(i) {
-      if (!confirm('Karte "' + cards[i].front.substring(0, 40) + (cards[i].front.length > 40 ? '...' : '') + '" wirklich löschen?')) return;
+      if (!confirm('Karte "' + cards[i].front.substring(0, 40) + (cards[i].front.length > 40 ? '...' : '') + '" wirklich l\u00f6schen?')) return;
       cards.splice(i, 1);
       if (idx >= cards.length) idx = Math.max(0, cards.length - 1);
       render();
     }
 
-    // Event listeners
     $('card').addEventListener('click', flip);
     $('btnFlip').addEventListener('click', flip);
     $('btnPrev').addEventListener('click', prev);
@@ -484,7 +507,6 @@
       if (e.key === 'Escape') backToSets();
     });
 
-    // Init
     renderStartScreen();
   </script>
 </body>
