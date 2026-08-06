@@ -1,1 +1,1869 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kartei – Bauspar-Tarife Lern-App</title>
+  <style>
+    :root {
+      --bg: #fafafa; --surface: #fff; --text: #111; --text-secondary: #555;
+      --text-tertiary: #888; --text-quaternary: #aaa; --border: #e5e5e5;
+      --hover: #f5f5f5; --danger: #dc2626; --accent: #2563eb;
+      --radius-lg: 12px; --radius-md: 10px; --radius-sm: 6px;
+      --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.05);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0a0a0a; --surface: #141414; --text: #f0f0f0;
+        --text-secondary: #aaa; --text-tertiary: #777; --text-quaternary: #555;
+        --border: #2a2a2a; --hover: #1f1f1f; --danger: #ef4444; --accent: #3b82f6;
+        --shadow: 0 1px 3px rgba(0,0,0,0.3), 0 4px 12px rgba(0,0,0,0.2);
+      }
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: var(--bg); color: var(--text); min-height: 100vh;
+      display: flex; justify-content: center; padding: 24px 16px;
+    }
+    .container { width: 100%; max-width: 600px; }
+    .start-screen { display: block; }
+    .start-screen.hidden { display: none; }
+    .start-header { text-align: center; margin-bottom: 32px; }
+    .start-header h1 { font-size: 26px; font-weight: 700; margin-bottom: 6px; letter-spacing: -0.02em; }
+    .start-header p { font-size: 15px; color: var(--text-tertiary); }
+    .sets-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
+    @media (min-width: 480px) { .sets-grid { grid-template-columns: 1fr 1fr; } }
+    .set-card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
+      padding: 20px; cursor: pointer; transition: all 0.2s ease; box-shadow: var(--shadow);
+      text-align: left; position: relative; overflow: hidden;
+    }
+    .set-card:hover { transform: translateY(-2px); border-color: var(--text); }
+    .set-card:active { transform: translateY(0); }
+    .set-card .set-num {
+      position: absolute; top: 14px; right: 16px; font-size: 11px; font-weight: 600;
+      color: var(--text-quaternary); text-transform: uppercase; letter-spacing: 0.08em;
+    }
+    .set-card .set-title { font-size: 15px; font-weight: 600; margin-bottom: 6px; padding-right: 40px; line-height: 1.35; }
+    .set-card .set-subtitle { font-size: 13px; color: var(--text-tertiary); line-height: 1.4; margin-bottom: 12px; }
+    .set-card .set-count {
+      display: inline-flex; align-items: center; gap: 6px; font-size: 12px;
+      font-weight: 500; color: var(--text-secondary); background: var(--hover);
+      padding: 4px 10px; border-radius: 20px;
+    }
+    .set-card .set-count svg { width: 14px; height: 14px; }
+    .learn-screen { display: none; }
+    .learn-screen.active { display: block; }
+    .learn-header {
+      display: flex; align-items: center; gap: 12px; margin-bottom: 16px;
+    }
+    .learn-header .back-btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      padding: 8px 14px; border-radius: var(--radius-md); font-size: 13px; font-weight: 500;
+      border: 1px solid var(--border); background: transparent; color: var(--text);
+      cursor: pointer; transition: all 0.15s; font-family: inherit;
+    }
+    .learn-header .back-btn:hover { background: var(--hover); }
+    .learn-header .set-info { flex: 1; }
+    .learn-header .set-info h2 { font-size: 16px; font-weight: 600; }
+    .learn-header .set-info span { font-size: 12px; color: var(--text-tertiary); }
+    .progress-wrap { height: 4px; background: var(--border); border-radius: 2px; margin-bottom: 24px; overflow: hidden; }
+    .progress-fill { height: 100%; background: var(--text); border-radius: 2px; transition: width 0.35s cubic-bezier(0.25,0.46,0.45,0.94); }
+    .scene { perspective: 1000px; margin-bottom: 24px; }
+    .card {
+      position: relative; width: 100%; min-height: 300px; transform-style: preserve-3d;
+      transition: transform 0.55s cubic-bezier(0.25,0.46,0.45,0.94); cursor: pointer;
+    }
+    .card.flipped { transform: rotateY(180deg); }
+    .face {
+      position: absolute; inset: 0; backface-visibility: hidden; border-radius: var(--radius-lg);
+      border: 1px solid var(--border); background: var(--surface); box-shadow: var(--shadow);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 28px; text-align: center;
+    }
+    .face-back { transform: rotateY(180deg); }
+    .face-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-tertiary); margin-bottom: 14px; }
+    .face-text { font-size: 17px; font-weight: 500; line-height: 1.5; word-break: break-word; color: var(--text); white-space: pre-wrap; }
+    .face-hint { margin-top: 20px; font-size: 12px; color: var(--text-quaternary); display: flex; align-items: center; gap: 6px; }
+    .face-hint svg { width: 14px; height: 14px; opacity: 0.5; }
+    .controls { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 16px; }
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      padding: 10px 18px; border-radius: var(--radius-md); font-size: 14px; font-weight: 500;
+      border: none; cursor: pointer; transition: all 0.15s ease; font-family: inherit; color: inherit;
+    }
+    .btn-primary { background: var(--text); color: var(--bg); }
+    .btn-primary:hover { opacity: 0.85; transform: translateY(-1px); }
+    .btn-secondary { background: transparent; color: var(--text); border: 1px solid var(--border); }
+    .btn-secondary:hover { background: var(--hover); }
+    .btn-icon { width: 40px; height: 40px; padding: 0; }
+    .btn:disabled { opacity: 0.3; cursor: not-allowed; transform: none !important; }
+    .editor { display: none; margin-top: 16px; padding: 20px; border-radius: var(--radius-lg); border: 1px solid var(--border); background: var(--surface); box-shadow: var(--shadow); animation: slideDown 0.25s ease; }
+    .editor.open { display: block; }
+    @keyframes slideDown { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+    .editor-title { font-size: 15px; font-weight: 600; margin-bottom: 14px; }
+    .field { margin-bottom: 14px; }
+    .field label { display: block; font-size: 12px; font-weight: 500; color: var(--text-tertiary); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .field textarea { width: 100%; min-height: 64px; padding: 12px 14px; border-radius: var(--radius-md); border: 1px solid var(--border); background: var(--bg); color: var(--text); font: inherit; font-size: 15px; resize: vertical; outline: none; transition: border-color 0.15s; }
+    .field textarea:focus { border-color: var(--text); }
+    .editor-actions { display: flex; gap: 8px; justify-content: flex-end; }
+    .list { margin-top: 20px; border-radius: var(--radius-lg); border: 1px solid var(--border); background: var(--surface); box-shadow: var(--shadow); overflow: hidden; }
+    .list-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; border-bottom: 1px solid var(--border); cursor: pointer; user-select: none; transition: background 0.15s; }
+    .list-header:hover { background: var(--hover); }
+    .list-header span { font-size: 14px; font-weight: 600; }
+    .list-toggle { font-size: 12px; color: var(--text-tertiary); font-weight: 500; display: flex; align-items: center; gap: 4px; }
+    .list-toggle svg { width: 14px; height: 14px; transition: transform 0.2s; }
+    .list-toggle.open svg { transform: rotate(180deg); }
+    .list-body { display: none; max-height: 320px; overflow-y: auto; }
+    .list-body.open { display: block; }
+    .list-item { display: flex; align-items: center; justify-content: space-between; padding: 12px 18px; border-bottom: 1px solid var(--border); font-size: 14px; transition: background 0.12s; cursor: pointer; }
+    .list-item:last-child { border-bottom: none; }
+    .list-item:hover { background: var(--hover); }
+    .list-item.active { background: var(--hover); font-weight: 600; }
+    .list-item-text { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-right: 8px; color: var(--text); }
+    .list-item-num { color: var(--text-quaternary); font-weight: 500; margin-right: 8px; min-width: 28px; }
+    .list-actions { display: flex; gap: 2px; opacity: 0; transition: opacity 0.15s; }
+    .list-item:hover .list-actions { opacity: 1; }
+    .list-actions button { width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border-radius: var(--radius-sm); border: none; background: none; cursor: pointer; color: var(--text-tertiary); transition: all 0.12s; }
+    .list-actions button:hover { background: var(--border); color: var(--text); }
+    .list-actions button.delete:hover { background: color-mix(in srgb, var(--danger) 12%, transparent); color: var(--danger); }
+    .keyboard-hint { text-align: center; margin-top: 12px; font-size: 12px; color: var(--text-quaternary); }
+    .keyboard-hint kbd { display: inline-block; padding: 2px 6px; border-radius: 4px; border: 1px solid var(--border); background: var(--surface); font-family: inherit; font-size: 11px; margin: 0 2px; }
+    @media (max-width: 480px) { .face-text { font-size: 15px; } .face { padding: 20px; min-height: 260px; } .btn { padding: 9px 14px; font-size: 13px; } .start-header h1 { font-size: 22px; } }
+    @media (prefers-reduced-motion: reduce) { .card { transition: none; } .editor { animation: none; } }
+  </style>
+  <base target="_blank">
+<base target="_blank">
+<base target="_blank">
+<base target="_blank">
+<base target="_blank">
+<base target="_blank">
+</head>
+<body>
+  <div class="container">
+    <div class="start-screen" id="startScreen">
+      <div class="start-header">
+        <h1>📚 Bauspar-Tarife Kartei</h1>
+        <p>Wähle einen Lernbereich, um zu starten</p>
+      </div>
+      <div class="sets-grid" id="setsGrid"></div>
+    </div>
+    <div class="learn-screen" id="learnScreen">
+      <div class="learn-header">
+        <button class="back-btn" id="btnBackToSets">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+          Übersicht
+        </button>
+        <div class="set-info">
+          <h2 id="learnTitle">SET</h2>
+          <span id="learnCounter">0 / 0</span>
+        </div>
+      </div>
+      <div class="progress-wrap"><div class="progress-fill" id="progress" style="width:0%"></div></div>
+      <div class="scene" id="scene">
+        <div class="card" id="card">
+          <div class="face face-front">
+            <div class="face-label">Vorderseite</div>
+            <div class="face-text" id="frontText">Lade Karte...</div>
+            <div class="face-hint">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21h5v-5"/></svg>
+              Tippen oder Leertaste zum Umdrehen
+            </div>
+          </div>
+          <div class="face face-back">
+            <div class="face-label">Rückseite</div>
+            <div class="face-text" id="backText">...</div>
+          </div>
+        </div>
+      </div>
+      <div class="controls">
+        <button class="btn btn-secondary btn-icon" id="btnPrev" title="Zurück (←)">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <button class="btn btn-primary" id="btnFlip">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21h5v-5"/></svg>
+          Umdrehen
+        </button>
+        <button class="btn btn-secondary btn-icon" id="btnNext" title="Weiter (→)">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+      </div>
+      <div class="controls" style="gap:8px">
+        <button class="btn btn-secondary" id="btnShuffle">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></svg>
+          Mischen
+        </button>
+        <button class="btn btn-secondary" id="btnAdd">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Neue Karte
+        </button>
+      </div>
+      <div class="editor" id="editor">
+        <div class="editor-title" id="editorTitle">Karte bearbeiten</div>
+        <div class="field"><label>Vorderseite</label><textarea id="inputFront" placeholder="Frage, Begriff oder Stichwort..."></textarea></div>
+        <div class="field"><label>Rückseite</label><textarea id="inputBack" placeholder="Antwort, Definition oder Erklärung..."></textarea></div>
+        <div class="editor-actions">
+          <button class="btn btn-secondary" id="btnCancel">Abbrechen</button>
+          <button class="btn btn-primary" id="btnSave">Speichern</button>
+        </div>
+      </div>
+      <div class="list">
+        <div class="list-header" id="listHeader">
+          <span>Alle Karten dieses Sets</span>
+          <div class="list-toggle" id="listToggle">Anzeigen<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div>
+        </div>
+        <div class="list-body" id="listBody"></div>
+      </div>
+      <div class="keyboard-hint">
+        <kbd>←</kbd> <kbd>→</kbd> navigieren · <kbd>Leertaste</kbd> umdrehen · <kbd>S</kbd> mischen · <kbd>Esc</kbd> zurück
+      </div>
+    </div>
+  </div>
+  <script>
+    const SETS = {
+      set1: {
+        title: "SET 1: Kernbesonderheiten & Alleinstellungsmerkmale",
+        subtitle: "Die offizielle Besonderheit + Verkaufssatz",
+        cards: [
+          { front: `Tarif KOMPAKT – Was ist seine Kernbesonderheit / sein Alleinstellungsmerkmal?`, back: `Einfacher Einstiegstarif von Anfang bis Ende
+• Gebundener Sollzins: 1,75 %
+• Regelsparbeitrag: 5 ‰
+• Maximale Bausparsumme: 60.000 €
+• Mindestsparguthaben: 50 %
+• Abschlussgebühr: 1 %
+• Agio: 2 %
+• Ideal für Blankodarlehen
+• Jugendbonus integriert
+• Teilung möglich` },
+          { front: `Tarif KOMFORT – Was ist seine Kernbesonderheit / sein Alleinstellungsmerkmal?`, back: `Individuelle Wahl zwischen zwei Geschwindigkeiten:
+• Modernisierung: 0,45 % Sollzins + 10 ‰ Tilgung (schnell)
+• Niedrige Rate: 1,95 % Sollzins + 3,5 ‰ Tilgung (niedrige Belastung)
+• Variantenwechsel möglich
+• Modernisierungsvorsorge
+• Teilungsmöglichkeit
+• Klimabonus
+• Blankodarlehen bis 75.000 €` },
+          { front: `Tarif PREMIUM – Was ist seine Kernbesonderheit / sein Alleinstellungsmerkmal?`, back: `Bester Zins am Markt & kein Agio
+• Ab 100.000 € BSS: gebundener Sollzins nur 1,25 %
+• Keine Bearbeitungsgebühr (0 % Agio)
+• Zinsrabatt ab 100.000 € Bausparsumme
+• Wohn-Riester möglich
+• Schnelle Zuteilung
+• Wüstenrot Wohnkonto Cash
+• Niedrigster Sollzins im Produktsegment` },
+          { front: `Tarif TREND – Was ist seine Kernbesonderheit / sein Alleinstellungsmerkmal?`, back: `Flexibler Marktzins
+• Guthabenzins: mind. 0,20 %, max. 4,00 %
+• Darlehenszins passt sich an: mind. 2,69 %, max. 6,49 %
+• Generationenbonus
+• Staatliche Förderung möglich
+• Jugendbonus
+• Für jede Zinslage geeignet` },
+          { front: `Tarif SPEZIAL – Was ist seine Kernbesonderheit / sein Alleinstellungsmerkmal?`, back: `Exklusiv für große Volumen
+• Mindest-Bausparsumme: 250.000 €
+• Gebundener Sollzins: 1,60 %
+• Kein Agio (0 %)
+• Zins- und Tilgungsbeitrag frei wählbar: 4,5 ‰ – 8 ‰
+• Nur eine Zinsvariante
+• Sonderzahlungen und -tilgungen jederzeit möglich
+• Marktgerechte Zuteilungszeiten
+• Mindestsparzeit: 36 Monate` },
+        ]
+      },
+      set2: {
+        title: "SET 2: Kunden-Personas (50 Stück)",
+        subtitle: "Eine Geschichte pro Karte – passender Tarif finden",
+        cards: [
+          { front: `Anna (18) – Azubine, hat 50 € im Monat übrig, will einfach mal anfangen.`, back: `→ KOMPAKT
+(Einfacher Einstieg, kleine Beträge, Jugendbonus)` },
+          { front: `Max (19) – Schüler, spart für den Führerschein, hat noch kein konkretes Bauvorhaben.`, back: `→ KOMPAKT
+(Vermögensaufbau, unentschlossener Sparer, Jugendbonus)` },
+          { front: `Kevin (22) – Angestellter, kriegt VL vom Arbeitgeber, will erstmal Vermögen aufbauen.`, back: `→ TREND
+(VL-Sparer, flexibler Marktzins, staatliche Förderung)` },
+          { front: `Sabine (29) – Alleinerziehend, möchte eine kleine Eigentumswohnung (ca. 120.000 €) kaufen.`, back: `→ PREMIUM
+(Größere Summe, bester Zins ab 100k, Zins sichern)` },
+          { front: `Familie Schmidt (32/30) – Will nächstes Jahr bauen, hat Angst vor steigenden Zinsen.`, back: `→ PREMIUM
+(Zinssicherung, niedrigster Sollzins 1,25 %, kein Agio)` },
+          { front: `Familie Weber (40/42) – Besitzt ein Haus, will energetisch sanieren (Photovoltaik + Dämmung).`, back: `→ KOMFORT
+(Modernisierungsvariante 0,45 %, Klimabonus)` },
+          { front: `Herr Müller (55) – Besitzt ein Haus, will altersgerecht umbauen (Bad ebenerdig, Treppenlift).`, back: `→ KOMFORT
+(Modernisierung oder niedrige Rate, Generation 50+)` },
+          { front: `Herr Fischer (60) – Kurz vor Rente, will sein bestehendes Darlehen ablösen.`, back: `→ PREMIUM
+(Anschlussfinanzierer, niedrige Zinsen, Wohn-Riester)` },
+          { front: `Frau Dr. Wagner (50) – Besitzt 3 Mehrfamilienhäuser, braucht große Anschlussfinanzierung.`, back: `→ SPEZIAL
+(Großvolumen ab 250.000 €, Investor, gewerblich)` },
+          { front: `Lisa (17) – Schülerin, bekommt Wohnungsbauprämie vom Staat, will langfristig sparen.`, back: `→ KOMPAKT
+(Jugendbonus, staatliche Prämie, früher Einstieg)` },
+          { front: `Tom (21) – Student, jobbt nebenbei, will schon mal für die Zukunft vorsorgen.`, back: `→ KOMPAKT
+(Kleine monatliche Beträge, einfach, keine Verpflichtung)` },
+          { front: `Julia (24) – Erzieherin, spart 80 €/Monat, träumt vom Eigenheim in 10 Jahren.`, back: `→ KOMPAKT
+(Regelmäßiges Sparen, überschaubar, früher Start)` },
+          { front: `Markus (26) – Handwerker, verdient gut, will sich Zinsen für später sichern.`, back: `→ PREMIUM
+(Zinssicherung, kann später groß finanzieren)` },
+          { front: `Sandra (28) – Verkäuferin, alleinlebend, möchte eine 1-Zimmer-Wohnung kaufen.`, back: `→ KOMPAKT
+(Kleines Budget, max. 60.000 € BSS ausreichend)` },
+          { front: `Familie Braun (35/33) – Haben ein Grundstück geerbt, wollen nächstes Jahr bauen.`, back: `→ PREMIUM
+(Große Finanzierung nötig, Zinsbindung wichtig)` },
+          { front: `Stefan (38) – ITler, Single, kauft eine Eigentumswohnung für 150.000 €.`, back: `→ PREMIUM
+(Über 100k BSS, bester Zins 1,25 %, kein Agio)` },
+          { front: `Claudia (41) – Geschäftsführerin, will ihr Bürogebäude kaufen und umbauen.`, back: `→ SPEZIAL
+(Gewerblicher Kauf, hohe Summe, flexible Konditionen)` },
+          { front: `Herr Krause (48) – Handwerksmeister, besitzt eine Halle, will erweitern.`, back: `→ SPEZIAL
+(Gewerbliche Immobilie, großes Volumen, Investor)` },
+          { front: `Familie Hoffmann (45/43) – Wohnen zur Miete, wollen in 5 Jahren ein Reihenhaus kaufen.`, back: `→ PREMIUM
+(Zinssicherung für später, Perspektivsparer)` },
+          { front: `Katharina (23) – Auszubildende zur Bankkauffrau, bekommt VL, will Vermögen bilden.`, back: `→ TREND
+(VL-Sparer, junge Zielgruppe, flexibel)` },
+          { front: `Oliver (27) – Polizist, sicheres Einkommen, will langfristig für ein Haus sparen.`, back: `→ PREMIUM
+(Sicheres Einkommen, langfristige Planung, Zinssicherung)` },
+          { front: `Frau Neumann (52) – Witwe, besitzt ein Einfamilienhaus, möchte Dach neu decken.`, back: `→ KOMFORT
+(Modernisierung, niedrige Rate oder schnelle Tilgung)` },
+          { front: `Herr Schmid (58) – Rentner, will sein Bad barrierefrei umbauen, niedrige Raten.`, back: `→ KOMFORT
+(Niedrige-Rate-Variante 3,5 ‰, Generation 50+)` },
+          { front: `Familie Lang (36/34) – Beide Beamte, wollen ein Einfamilienhaus für 350.000 € bauen.`, back: `→ PREMIUM
+(Hohe Summe, sicheres Einkommen, Wohn-Riester möglich)` },
+          { front: `Jan (20) – Student, bekommt 40 € VL/Monat vom Arbeitgeber, will anlegen.`, back: `→ TREND
+(VL-Sparer, junger Kunde, Vermögensaufbau)` },
+          { front: `Melanie (31) – Krankenschwester, alleinerziehend, will eine kleine Wohnung (80.000 €).`, back: `→ KOMPAKT
+(Kleine Summe, überschaubar, alleinerziehend)` },
+          { front: `Herr Bauer (62) – Rentner, will seine Anschlussfinanzierung nach Zinsbindung ablösen.`, back: `→ PREMIUM
+(Anschlussfinanzierer, niedrige Zinsen sichern)` },
+          { front: `Frau Richter (47) – Zahnärztin, kauft eine Praxiswohnung für 200.000 €.`, back: `→ PREMIUM
+(Hohe Summe, selbstständig, Zinssicherung)` },
+          { front: `Tim (25) – Mechatroniker, verdient 2.500 € netto, will in 8 Jahren bauen.`, back: `→ PREMIUM
+(Langfristige Zinssicherung, gutes Einkommen)` },
+          { front: `Familie Schuster (39/37) – Wohnen im Mietshaus, wollen sanieren und bleiben.`, back: `→ KOMFORT
+(Modernisierungsvariante, Eigentümer bleiben)` },
+          { front: `Herr König (65) – Rentner, will sein Haus energetisch sanieren (Fenster, Heizung).`, back: `→ KOMFORT
+(Modernisierung, Klimabonus, niedrige Rate möglich)` },
+          { front: `Sophie (16) – Schülerin, Eltern zahlen 30 €/Monat ein, will früh starten.`, back: `→ KOMPAKT
+(Jugendbonus, früher Start durch Eltern, kleine Beträge)` },
+          { front: `Familie Maier (44/42) – Wohnen zur Miete, wollen in 3 Jahren ein Haus kaufen.`, back: `→ PREMIUM
+(Kurzfristige Zinssicherung, Perspektivsparer)` },
+          { front: `Herr Wolf (56) – Ingenieur, besitzt ein Reihenhaus, will Anbau für Homeoffice.`, back: `→ KOMFORT
+(Modernisierung, schnelle Tilgung möglich)` },
+          { front: `Nina (30) – Grafikdesignerin, Selbstständig, will eine Loft-Wohnung kaufen.`, back: `→ PREMIUM
+(Selbstständig, aber gutes Einkommen, Zinssicherung)` },
+          { front: `Herr Huber (59) – Beamter, will nach der Pensionierung seine Immobilie modernisieren.`, back: `→ KOMFORT
+(Modernisierung, sicheres Renteneinkommen, niedrige Rate)` },
+          { front: `Familie Kaiser (33/31) – Beide im öffentlichen Dienst, wollen ein Doppelhaus bauen.`, back: `→ PREMIUM
+(Sicheres Einkommen, hohe Summe, Wohn-Riester)` },
+          { front: `Lea (19) – Auszubildende, bekommt Wohnungsbauprämie, spart für die Zukunft.`, back: `→ KOMPAKT
+(Jugendbonus, staatliche Prämie, kleine Beträge)` },
+          { front: `Herr Schulz (53) – Besitzt ein Mehrfamilienhaus mit 6 Wohnungen, will sanieren.`, back: `→ SPEZIAL
+(Großes Volumen, Vermieter, WEG-Struktur möglich)` },
+          { front: `Familie Becker (37/35) – Wohnen zur Miete, haben 2 Kinder, wollen ein Haus mit Garten.`, back: `→ PREMIUM
+(Familie, langfristige Planung, Zinssicherung wichtig)` },
+          { front: `Herr Frank (61) – Rentner, will seine abbezahlte Wohnung renovieren (Küche, Bad).`, back: `→ KOMFORT
+(Modernisierung, niedrige Rate, kein Zeitdruck)` },
+          { front: `Laura (22) – Studentin, bekommt VL, will flexibel bleiben und Zinsen mitnehmen.`, back: `→ TREND
+(VL-Sparer, flexibel, von steigenden Zinsen profitieren)` },
+          { front: `Herr Berger (50) – Unternehmer, will ein Gewerbeobjekt für 400.000 € erwerben.`, back: `→ SPEZIAL
+(Gewerblicher Kauf, hohe Summe, flexible Tilgung)` },
+          { front: `Familie Schmitt (29/27) – Frisch verheiratet, wollen in 2 Jahren eine Wohnung kaufen.`, back: `→ PREMIUM
+(Kurzfristige Zinssicherung, junge Familie)` },
+          { front: `Herr Lorenz (57) – Rentner, will sein Haus an die Enkelkinder übergeben, aber erst sanieren.`, back: `→ KOMFORT
+(Modernisierung, Generationenübergabe, niedrige Rate)` },
+          { front: `Familie Peters (46/44) – Wohnen zur Miete, wollen altersgerecht umbauen und bleiben.`, back: `→ KOMFORT
+(Modernisierung, barrierefrei, Eigentum aufbauen)` },
+          { front: `Herr Hoffmann (64) – Rentner, will seine Anschlussfinanzierung nach 10 Jahren sichern.`, back: `→ PREMIUM
+(Anschlussfinanzierer, Zins sichern für später)` },
+          { front: `Sarah (18) – Schülerin, hat 500 € Konfirmationsgeld, will anlegen.`, back: `→ KOMPAKT
+(Jugendbonus, Einmalerlage möglich, kleiner Start)` },
+          { front: `Herr Müller-Lüdenscheid (49) – Kommunalpolitiker, will Wohnungen für Flüchtlinge bauen.`, back: `→ SPEZIAL
+(Kommune, sozialer Wohnungsbau, großes Volumen)` },
+          { front: `Familie Krüger (40/38) – Wohnen zur Miete, wollen ein Haus mit Photovoltaik bauen.`, back: `→ PREMIUM
+(Neubau, hohe Summe, Klimabonus über Komfort später)` },
+          { front: `Herr Schäfer (54) – Besitzt ein Gewerbegrundstück, will eine Lagerhalle bauen.`, back: `→ SPEZIAL
+(Gewerbe, großes Volumen, Investor)` },
+          { front: `Anna-Lena (26) – Ergotherapeutin, will mit ihrer Freundin zusammenziehen und kaufen.`, back: `→ KOMPAKT
+(Kleine Wohnung, begrenztes Budget, einfacher Einstieg)` },
+          { front: `Herr Braun (67) – Rentner, will sein Haus verkaufen und in eine kleine Wohnung ziehen.`, back: `→ KOMPAKT
+(Kleine Wohnung, überschaubar, kein großes Darlehen)` },
+          { front: `Familie Weiß (34/32) – Wohnen zur Miete, wollen ein Haus auf dem Land kaufen.`, back: `→ PREMIUM
+(Landhaus, gute Preise, Zinssicherung für die Zukunft)` },
+        ]
+      },
+      set3: {
+        title: "SET 3: Die Superlative",
+        subtitle: "Wer hat den niedrigsten Zins? Die höchste Summe?",
+        cards: [
+          { front: `Wer hat den niedrigsten gebundenen Sollzins?`, back: `PREMIUM (1,25 % p.a. – ab 100.000 € BSS)
+Bei < 100.000 €: 1,50 %` },
+          { front: `Wer hat den zweitniedrigsten gebundenen Sollzins?`, back: `SPEZIAL (1,60 % p.a.)` },
+          { front: `Welcher Tarif hat den niedrigsten Zins- und Tilgungsbeitrag (niedrigste monatliche Belastung) – und welche Alternative gibt es?`, back: `KOMFORT – Niedrige-Rate-Variante (3,5 ‰)
+Alternativ: 3 ‰ bei 1,95 % Darlehenszins` },
+          { front: `Welcher Tarif hat die höchste Mindest-Bausparsumme?`, back: `SPEZIAL (250.000 €)` },
+          { front: `Welche Tarife haben kein Agio (0 % Bearbeitungsgebühr)?`, back: `PREMIUM und SPEZIAL` },
+          { front: `Welcher Tarif ist der einzige mit variablen / marktabhängigen Zinsen?`, back: `TREND
+(Guthabenzins 0,20–4,00 %, Darlehenszins 2,69–6,49 %)` },
+          { front: `Welcher Tarif hat die kleinste maximale Bausparsumme (Obergrenze)?`, back: `KOMPAKT (max. 60.000 €)` },
+          { front: `Welcher Tarif hat den höchsten Guthabenzins (maximal möglich)?`, back: `TREND (max. 4,00 % jährlich)` },
+          { front: `Welcher Tarif hat die längste maximale Tilgungsdauer?`, back: `KOMFORT – Niedrige Rate (17 Jahre, 2 Monate)` },
+          { front: `Welcher Tarif hat die kürzeste maximale Tilgungsdauer?`, back: `KOMFORT – Modernisierung (5 Jahre, 3 Monate)` },
+        ]
+      },
+      set4: {
+        title: "SET 4: Eselsbrücken & Kennzahlen",
+        subtitle: "Offizielle Tarifmerkmale mit Merkhilfen",
+        cards: [
+          { front: `Kompakt: Wie lauten Sollzins, Guthabenzins, max. BSS, Mindestsparguthaben, Agio und effektiver Jahreszins?`, back: `• Sollzins: 1,75 %
+• Guthabenzins: 0,20 %
+• Maximale BSS: 60.000 €
+• Mindestsparguthaben: 50 %
+• Agio: 2 %
+• Effektiver Jahreszins: 2,49 %` },
+          { front: `Komfort: Wie lauten die beiden Sollzins-Varianten, die dazugehörigen Tilgungsbeiträge, Agios, Tilgungsdauern und effektiven Jahreszinsen?`, back: `Modernisierung:
+• Sollzins: 0,45 %
+• Tilgungsbeitrag: 10 ‰
+• Agio: 2 %
+• Tilgungsdauer: 5 J. 3 M.
+• Eff. Jahreszins: 1,99 %
+
+Niedrige Rate:
+• Sollzins: 1,95 %
+• Tilgungsbeitrag: 3,5 ‰
+• Agio: 1 %
+• Tilgungsdauer: 17 J. 2 M.
+• Eff. Jahreszins: 2,38 %` },
+          { front: `Premium: Wie lautet der Sollzins ab 100.000 € BSS und unter 100.000 € BSS, welche Agio-Regelung gilt und wie sind die Wohn-Riester-Gebühren?`, back: `Ab 100.000 € BSS:
+• Sollzins: 1,25 %
+• Agio: 0 % (keines!)
+
+Unter 100.000 €:
+• Sollzins: 1,50 %
+• Agio: 0 %
+
+Wohn-Riester:
+• Abschlussgebühr 1 % verteilt auf 5 J.
+• Variantenpreis 0,5 % verteilt auf 5 J.
+• Kontogebühr: 20 €/Jahr` },
+          { front: `Spezial: Wie lauten Sollzins, Mindest-BSS, Tilgungsbeitrags-Spanne, Agio, Mindestsparzeit und effektiver Jahreszins?`, back: `• Sollzins: 1,60 %
+• Mindest-BSS: 250.000 €
+• Tilgungsbeitrag: 4,5 ‰ – 8 ‰
+• Agio: 0 % (keines!)
+• Mindestsparzeit: 36 Monate
+• Eff. Jahreszins: 1,99 % (4,5 ‰) – 2,30 % (8 ‰)` },
+          { front: `Trend: Wie verhalten sich Guthaben- und Darlehenszins im Vergleich zum Markt und wie hoch sind Agio und Regelsparbeitrag?`, back: `• Guthabenzins: mind. 0,20 %, max. 4,00 %
+• Darlehenszins: mind. 2,69 %, max. 6,49 %
+• Beide passen sich der Marktentwicklung an!
+• Agio: 2 %
+• Regelsparbeitrag: 5 ‰` },
+          { front: `Wie hoch ist die durchschnittliche Mietersparnis für Rentner mit Wohneigentum?`, back: `669 € pro Monat
+Das entspricht 35 % ihrer gesetzlichen Rente
+(Steinerne Zusatzrente)` },
+          { front: `Wie hoch ist das durchschnittliche Nettovermögen von Eigentümern vs. Mietern (50–59 J., Einkommen 1.700–2.300 €)?`, back: `Eigentümer: 166.000 €
+Mieter: 30.000 €
+→ Eigentümer haben mehr als das Fünffache!` },
+          { front: `Wie viel Ersparnis bringt Wohnsparen im Vergleich zu reiner Immobilienfinanzierung (Beispiel 400.000 €)?`, back: `Ohne Vorsparen: 697.278 € Gesamtkosten
+Mit Wohnsparen: 480.036 € Gesamtkosten
+→ Ersparnis: 217.242 €!` },
+        ]
+      },
+      set5: {
+        title: "SET 5: Vertriebs-Matrix (50 Aussagen)",
+        subtitle: "Kundenaussage → sofortige Tarifempfehlung",
+        cards: [
+          { front: `"Ich hab keine Ahnung von Bausparen, will nur etwas Sicheres und Überschaubares."`, back: `→ KOMPAKT
+(Einfach von Anfang bis Ende, keine Überfrachtung)` },
+          { front: `"Ich bin 18 und möchte einfach mit kleinen Beträgen für meine Zukunft sparen."`, back: `→ KOMPAKT
+(Jugendbonus, einfacher Einstieg, 50 €/Monat möglich)` },
+          { front: `"Ich will mein altes Haus fit machen und umbauen."`, back: `→ KOMFORT
+(Modernisierungsvariante 0,45 %, Klimabonus)` },
+          { front: `"Ich will mein Haus barrierefrei umbauen, aber schnell abbezahlen."`, back: `→ KOMFORT
+(Modernisierung: 0,45 % + 10 ‰ = schnelle Tilgung)` },
+          { front: `"Ich will bauen, aber die aktuellen Zinsen sind mir viel zu hoch!"`, back: `→ PREMIUM
+(1,25 % ab 100k – niedrigster Sollzins, Zins sichern)` },
+          { front: `"Ich möchte meine Immobilie nach der 10-jährigen Zinsbindung ablösen."`, back: `→ PREMIUM
+(Anschlussfinanzierer, kein Agio, Wohn-Riester)` },
+          { front: `"Mein Chef gibt mir Vermögenswirksame Leistungen (VL)."`, back: `→ TREND
+(VL und WoP Sparer, staatliche Förderung)` },
+          { front: `"Ich möchte flexibel bleiben und von steigenden Guthabenzinsen profitieren."`, back: `→ TREND
+(Guthabenzins bis 4 %, marktabhängig)` },
+          { front: `"Ich bin selbstständig, habe ein hohes Einkommen und will ein Mehrfamilienhaus kaufen."`, back: `→ SPEZIAL
+(250.000 € Mindest-BSS, Investor, gewerblich)` },
+          { front: `"Ich habe eine große Immobilie im Wert von 800.000 € zu finanzieren."`, back: `→ SPEZIAL
+(Großprojekt, flexible Tilgung 4,5–8 ‰, kein Agio)` },
+          { front: `"Ich bin Schüler und bekomme Wohnungsbauprämie vom Staat."`, back: `→ KOMPAKT
+(Jugendbonus, staatliche Prämie, früher Einstieg)` },
+          { front: `"Ich studiere und jobbe nebenbei, will für später vorsorgen."`, back: `→ KOMPAKT
+(Kleine monatliche Beträge, einfach, keine Verpflichtung)` },
+          { front: `"Ich bin Erzieherin und spare 80 €/Monat für ein Eigenheim in 10 Jahren."`, back: `→ KOMPAKT
+(Regelmäßiges Sparen, überschaubar, früher Start)` },
+          { front: `"Ich bin Handwerker, verdiene gut und will mir Zinsen für später sichern."`, back: `→ PREMIUM
+(Zinssicherung, kann später groß finanzieren)` },
+          { front: `"Ich bin alleinlebend und möchte eine kleine 1-Zimmer-Wohnung kaufen."`, back: `→ KOMPAKT
+(Kleines Budget, max. 60.000 € BSS ausreichend)` },
+          { front: `"Wir haben ein Grundstück geerbt und wollen nächstes Jahr bauen."`, back: `→ PREMIUM
+(Große Finanzierung nötig, Zinsbindung wichtig)` },
+          { front: `"Ich bin ITler, Single, und kaufe eine Eigentumswohnung für 150.000 €."`, back: `→ PREMIUM
+(Über 100k BSS, bester Zins 1,25 %, kein Agio)` },
+          { front: `"Ich bin Geschäftsführerin und will mein Bürogebäude kaufen."`, back: `→ SPEZIAL
+(Gewerblicher Kauf, hohe Summe, flexible Konditionen)` },
+          { front: `"Ich bin Handwerksmeister und will meine Halle erweitern."`, back: `→ SPEZIAL
+(Gewerbliche Immobilie, großes Volumen, Investor)` },
+          { front: `"Wir wohnen zur Miete und wollen in 5 Jahren ein Reihenhaus kaufen."`, back: `→ PREMIUM
+(Zinssicherung für später, Perspektivsparer)` },
+          { front: `"Ich bin Auszubildende zur Bankkauffrau und bekomme VL."`, back: `→ TREND
+(VL-Sparer, junge Zielgruppe, flexibel)` },
+          { front: `"Ich bin Polizist mit sicherem Einkommen und will langfristig für ein Haus sparen."`, back: `→ PREMIUM
+(Sicheres Einkommen, langfristige Planung, Zinssicherung)` },
+          { front: `"Ich bin Witwe und möchte mein Dach neu decken lassen."`, back: `→ KOMFORT
+(Modernisierung, niedrige Rate oder schnelle Tilgung)` },
+          { front: `"Ich bin Rentner und will mein Bad barrierefrei umbauen mit niedrigen Raten."`, back: `→ KOMFORT
+(Niedrige-Rate-Variante 3,5 ‰, Generation 50+)` },
+          { front: `"Wir sind beide Beamte und wollen ein Einfamilienhaus für 350.000 € bauen."`, back: `→ PREMIUM
+(Hohe Summe, sicheres Einkommen, Wohn-Riester möglich)` },
+          { front: `"Ich bekomme 40 € VL/Monat und will als Student anlegen."`, back: `→ TREND
+(VL-Sparer, junger Kunde, Vermögensaufbau)` },
+          { front: `"Ich bin alleinerziehende Krankenschwester und will eine kleine Wohnung."`, back: `→ KOMPAKT
+(Kleine Summe, überschaubar, alleinerziehend)` },
+          { front: `"Ich bin Rentner und will meine Anschlussfinanzierung nach Zinsbindung ablösen."`, back: `→ PREMIUM
+(Anschlussfinanzierer, niedrige Zinsen sichern)` },
+          { front: `"Ich bin Zahnärztin und kaufe eine Praxiswohnung für 200.000 €."`, back: `→ PREMIUM
+(Hohe Summe, selbstständig, Zinssicherung)` },
+          { front: `"Ich bin Mechatroniker und will in 8 Jahren bauen."`, back: `→ PREMIUM
+(Langfristige Zinssicherung, gutes Einkommen)` },
+          { front: `"Wir wohnen im Mietshaus und wollen sanieren und bleiben."`, back: `→ KOMFORT
+(Modernisierungsvariante, Eigentümer bleiben)` },
+          { front: `"Ich bin Rentner und will mein Haus energetisch sanieren."`, back: `→ KOMFORT
+(Modernisierung, Klimabonus, niedrige Rate möglich)` },
+          { front: `"Meine Eltern zahlen 30 €/Monat für mich ein, ich bin noch Schülerin."`, back: `→ KOMPAKT
+(Jugendbonus, früher Start durch Eltern, kleine Beträge)` },
+          { front: `"Wir wohnen zur Miete und wollen in 3 Jahren ein Haus kaufen."`, back: `→ PREMIUM
+(Kurzfristige Zinssicherung, Perspektivsparer)` },
+          { front: `"Ich bin Ingenieur und will einen Anbau für mein Homeoffice."`, back: `→ KOMFORT
+(Modernisierung, schnelle Tilgung möglich)` },
+          { front: `"Ich bin selbstständige Grafikdesignerin und will eine Loft-Wohnung kaufen."`, back: `→ PREMIUM
+(Selbstständig, aber gutes Einkommen, Zinssicherung)` },
+          { front: `"Ich bin Beamter und will nach der Pensionierung modernisieren."`, back: `→ KOMFORT
+(Modernisierung, sicheres Renteneinkommen, niedrige Rate)` },
+          { front: `"Wir sind beide im öffentlichen Dienst und wollen ein Doppelhaus bauen."`, back: `→ PREMIUM
+(Sicheres Einkommen, hohe Summe, Wohn-Riester)` },
+          { front: `"Ich bin Auszubildende und bekomme Wohnungsbauprämie."`, back: `→ KOMPAKT
+(Jugendbonus, staatliche Prämie, kleine Beträge)` },
+          { front: `"Ich besitze ein Mehrfamilienhaus mit 6 Wohnungen und will sanieren."`, back: `→ SPEZIAL
+(Großes Volumen, Vermieter, WEG-Struktur möglich)` },
+          { front: `"Wir wohnen zur Miete, haben 2 Kinder und wollen ein Haus mit Garten."`, back: `→ PREMIUM
+(Familie, langfristige Planung, Zinssicherung wichtig)` },
+          { front: `"Ich bin Rentner und will meine abbezahlte Wohnung renovieren."`, back: `→ KOMFORT
+(Modernisierung, niedrige Rate, kein Zeitdruck)` },
+          { front: `"Ich bin Studentin, bekomme VL und will flexibel bleiben."`, back: `→ TREND
+(VL-Sparer, flexibel, von steigenden Zinsen profitieren)` },
+          { front: `"Ich bin Unternehmer und will ein Gewerbeobjekt für 400.000 € erwerben."`, back: `→ SPEZIAL
+(Gewerblicher Kauf, hohe Summe, flexible Tilgung)` },
+          { front: `"Wir sind frisch verheiratet und wollen in 2 Jahren eine Wohnung kaufen."`, back: `→ PREMIUM
+(Kurzfristige Zinssicherung, junge Familie)` },
+          { front: `"Ich bin Rentner und will mein Haus an die Enkel übergeben, aber erst sanieren."`, back: `→ KOMFORT
+(Modernisierung, Generationenübergabe, niedrige Rate)` },
+          { front: `"Wir wohnen zur Miete und wollen altersgerecht umbauen und bleiben."`, back: `→ KOMFORT
+(Modernisierung, barrierefrei, Eigentum aufbauen)` },
+          { front: `"Ich bin Rentner und will meine Anschlussfinanzierung nach 10 Jahren sichern."`, back: `→ PREMIUM
+(Anschlussfinanzierer, Zins sichern für später)` },
+          { front: `"Ich habe 500 € Konfirmationsgeld und will als Schülerin anlegen."`, back: `→ KOMPAKT
+(Jugendbonus, Einmalerlage möglich, kleiner Start)` },
+          { front: `"Ich bin Kommunalpolitiker und will Wohnungen für Flüchtlinge bauen."`, back: `→ SPEZIAL
+(Kommune, sozialer Wohnungsbau, großes Volumen)` },
+          { front: `"Wir wohnen zur Miete und wollen ein Haus mit Photovoltaik bauen."`, back: `→ PREMIUM
+(Neubau, hohe Summe, Klimabonus über Komfort später)` },
+          { front: `"Ich besitze ein Gewerbegrundstück und will eine Lagerhalle bauen."`, back: `→ SPEZIAL
+(Gewerbe, großes Volumen, Investor)` },
+          { front: `"Ich bin Ergotherapeutin und will mit meiner Freundin zusammenziehen und kaufen."`, back: `→ KOMPAKT
+(Kleine Wohnung, begrenztes Budget, einfacher Einstieg)` },
+          { front: `"Ich bin Rentner und will mein Haus verkaufen und in eine kleine Wohnung ziehen."`, back: `→ KOMPAKT
+(Kleine Wohnung, überschaubar, kein großes Darlehen)` },
+          { front: `"Wir wohnen zur Miete und wollen ein Haus auf dem Land kaufen."`, back: `→ PREMIUM
+(Landhaus, gute Preise, Zinssicherung für die Zukunft)` },
+        ]
+      },
+      set6: {
+        title: "SET 6: Tarifdetails Kompakt",
+        subtitle: "Alle offiziellen Kennzahlen aus dem Tarifblatt",
+        cards: [
+          { front: `Kompakt – Sparphase: Guthabenzins, Mindest-BSS, max. BSS, Mindestsparguthaben, Regelsparbeitrag und Abschlussgebühr?`, back: `• Guthabenzins: 0,20 % p.a.
+• Mindest-BSS: 10.000 €
+• Maximale BSS: 60.000 €
+• Mindestsparguthaben: 50 % der BSS
+• Regelsparbeitrag: 5 ‰ der BSS
+• Abschlussgebühr: 1 % der BSS` },
+          { front: `Kompakt – Darlehensphase: Sollzins, Agio, Tilgungsbeitrag, Tilgungsdauer und effektiver Jahreszins?`, back: `• Sollzins gebunden: 1,75 % p.a.
+• Agio: 2 % des Anfangsdarlehens
+• Zins- und Tilgungsbeitrag: 5 ‰
+• Maximale Tilgungsdauer: 9 Jahre, 5 Monate
+• Effektiver Jahreszins: 2,49 %` },
+          { front: `Kompakt – Zielgruppen und besondere Hinweise?`, back: `Zielgruppen:
+• Junge Leute
+• Unentschlossene Sparer
+• Generation 50+
+
+Besonderheiten:
+• Jugendbonus
+• Ideal für Blankodarlehen
+• Teilung möglich
+• Kein Grundbucheintrag nötig` },
+        ]
+      },
+      set7: {
+        title: "SET 7: Tarifdetails Komfort",
+        subtitle: "Zwei Varianten: Modernisierung & Niedrige Rate",
+        cards: [
+          { front: `Komfort – Sparphase: Guthabenzins, Mindest-BSS, Mindestsparguthaben, Regelsparbeitrag, Abschlussgebühr und Variantenpreis?`, back: `• Guthabenzins: 0,01 % p.a.
+• Mindest-BSS: 10.000 €
+• Mindestsparguthaben: 40 % der BSS
+• Regelsparbeitrag: 3 ‰ (1,95 % Darlehenszins)
+  oder 6 ‰ (0,45 % Darlehenszins)
+• Abschlussgebühr: 1 % der BSS
+• Variantenpreis: 0,6 % der BSS` },
+          { front: `Komfort – Modernisierung: Sollzins, Agio, Tilgungsbeitrag, Tilgungsdauer, Effektivzins?`, back: `• Sollzins: 0,45 % p.a.
+• Agio: 2 %
+• Zins- und Tilgungsbeitrag: 10 ‰
+• Maximale Tilgungsdauer: 5 Jahre, 3 Monate
+• Effektiver Jahreszins: 1,99 %` },
+          { front: `Komfort – Niedrige Rate: Sollzins, Agio, Tilgungsbeitrag, Tilgungsdauer, Effektivzins?`, back: `• Sollzins: 1,95 % p.a.
+• Agio: 1 %
+• Zins- und Tilgungsbeitrag: 3,5 ‰
+• Maximale Tilgungsdauer: 17 Jahre, 2 Monate
+• Effektiver Jahreszins: 2,38 %` },
+          { front: `Komfort – Zielgruppen und besondere Hinweise?`, back: `Zielgruppen:
+• Kunden mit Wohneigentum
+• Modernisierer
+• Generation 50+
+• Anschlussfinanzierer
+
+Besonderheiten:
+• Variantenwechsel möglich
+• Modernisierungsvorsorge
+• Wüstenrot Wohnkonto Cash
+• Klimabonus
+• Blankodarlehen bis 75.000 €` },
+        ]
+      },
+      set8: {
+        title: "SET 8: Tarifdetails Premium",
+        subtitle: "Bester Zins & kein Agio – mit Wohn-Riester",
+        cards: [
+          { front: `Premium – Sparphase: Guthabenzins, Mindest-BSS, Mindestsparguthaben, Regelsparbeitrag, Abschlussgebühr, Variantenpreis und Kontogebühr?`, back: `• Guthabenzins: 0,01 % p.a.
+• Mindest-BSS: 10.000 €
+• Mindestsparguthaben:
+  – 30 % bei Sollzins 2,25 %/2,00 %
+  – 40 % bei Sollzins 1,50 %/1,25 %
+• Regelsparbeitrag: 5 ‰ der BSS
+• Abschlussgebühr: 1 % (bei Riester auf 5 J. verteilt)
+• Variantenpreis: 0,6 % (bei Riester 0,5 % auf 5 J.)
+• Kontogebühr: 20 €/Jahr (nur Sparphase, bei Riester)` },
+          { front: `Premium – Darlehensphase BSS < 100.000 €: Sollzins, Agio, Zins- und Tilgungsbeitrag, Tilgungsdauer, effektiver Jahreszins und Wohn-Riester-Zins?`, back: `• Sollzins: 1,50 % / 2,25 %
+• Agio: Nein (0 %)
+• Zins- und Tilgungsbeitrag: 4 – 8 ‰
+• Tilgungsdauer: 14 J. / 17 J. 11 M.
+• Eff. Jahreszins: 1,85–2,20 % / 2,54–2,84 %
+• Wohn-Riester: 1,82–2,14 % / 2,52–2,81 %` },
+          { front: `Premium – Darlehensphase BSS ≥ 100.000 €: Sollzins, Agio, Zins- und Tilgungsbeitrag, Tilgungsdauer, effektiver Jahreszins und Wohn-Riester-Zins?`, back: `• Sollzins: 1,25 % / 2,00 %
+• Agio: Nein (0 %)
+• Zins- und Tilgungsbeitrag: 4 – 8 ‰
+• Tilgungsdauer: 13 J. 9 M. / 17 J. 6 M.
+• Eff. Jahreszins: 1,59–1,93 % / 2,29–2,58 %
+• Wohn-Riester: 1,57–1,88 % / 2,27–2,54 %` },
+          { front: `Premium – Zielgruppen und besondere Hinweise?`, back: `Zielgruppen:
+• Perspektivsparer / Miete in die eigene Tasche
+• Anschlussfinanzierer
+• Modernisierer
+
+Besonderheiten:
+• Günstigstes Darlehen ohne Agio
+• Zinsrabatt ab 100.000 € BSS
+• Wohn-Riester möglich
+• Schnelle Zuteilung
+• Wüstenrot Wohnkonto Cash` },
+        ]
+      },
+      set9: {
+        title: "SET 9: Tarifdetails Trend",
+        subtitle: "Flexibler Marktzins – für jede Zinslage",
+        cards: [
+          { front: `Trend – Sparphase: Guthabenzins, Mindest-BSS, Mindestsparguthaben, Regelsparbeitrag und Abschlussgebühr?`, back: `• Guthabenzins: mind. 0,20 %, max. 4,00 % p.a.
+• Mindest-BSS: 10.000 €
+• Mindestsparguthaben: 40 % der BSS
+• Regelsparbeitrag: 5 ‰ der BSS
+• Abschlussgebühr: 1 % der BSS` },
+          { front: `Trend – Darlehensphase: Sollzins, Agio, Tilgungsbeitrag, maximale Tilgungsdauer und effektiver Jahreszins?`, back: `• Sollzins: abhängig vom Guthabenzins
+  mind. 2,69 %, max. 6,49 % p.a.
+• Agio: 2 % des Anfangsdarlehens
+• Zins- und Tilgungsbeitrag: 5 ‰ der BSS
+• Maximale Tilgungsdauer: abhängig vom Sollzins
+• Effektiver Jahreszins: mind. 3,33 %, max. 7,26 %` },
+          { front: `Trend – Zielgruppen und besondere Hinweise?`, back: `Zielgruppen:
+• VL und WoP Sparer
+• Junge Leute (Vermögensaufbau)
+• Generation 50+
+
+Besonderheiten:
+• Generationenbonus
+• Staatliche Förderung möglich
+• Jugendbonus
+• Passt sich allen Zinslagen an
+• Sonderzins möglich (entfällt bei Kündigung innerhalb 7 J.)` },
+        ]
+      },
+      set10: {
+        title: "SET 10: Tarifdetails Spezial",
+        subtitle: "Nur für große Summen ab 250.000 €",
+        cards: [
+          { front: `Spezial – Sparphase: Guthabenzins, Mindest-BSS, Mindestsparguthaben, Mindestsparzeit, Regelsparbeitrag, Abschlussgebühr, Variantenpreis und Vertragsänderungen?`, back: `• Guthabenzins: 0,01 % p.a.
+• Mindest-BSS: 250.000 €
+• Mindestsparguthaben: 40 % der BSS
+• Regelsparbeitrag: 5 ‰ der BSS
+• Mindestsparzeit: 36 Monate
+• Abschlussgebühr: 1 % der BSS
+• Variantenpreis: 0,6 % der BSS
+• Vertragsänderungen: möglich (Teilung ab 50.000 €)` },
+          { front: `Spezial – Darlehensphase: Sollzins, Agio, Tilgungsbeitrag, Tilgungsdauer, Effektivzins?`, back: `• Sollzins: 1,60 % p.a.
+• Agio: Keines (0 %)
+• Zins- und Tilgungsbeitrag: 4,5 ‰ – 8 ‰
+• Tilgungsdauer:
+  – 12 J. 5 M. (bei 4,5 ‰)
+  – 6 J. 9 M. (bei 8 ‰)
+• Eff. Jahreszins: 1,99 % (4,5 ‰) – 2,30 % (8 ‰)` },
+          { front: `Spezial – Zielgruppen und besondere Hinweise?`, back: `Zielgruppen:
+• Vermögende Kunden
+• WEGs
+• Unternehmen (Arbeitgeber)
+• Kommunen
+• Baugenossenschaften
+• Banken
+
+Besonderheiten:
+• Nur eine Zinsvariante
+• Sonderzahlungen und -tilgungen jederzeit möglich
+• Marktgerechte Zuteilungszeiten
+• Planbarkeit und preiswerte Zinssicherung` },
+        ]
+      },
+      set11: {
+        title: "SET 11: Perspektivsparen Grundlagen",
+        subtitle: "Die 3 Phasen, Vorteile und Kundenwünsche",
+        cards: [
+          { front: `Was sind die 3 Phasen des Wohnsparens?`, back: `1. Sparphase:
+   Einzahlungen bis Mindestsparguthaben
+   (40–50 % der Bausparsumme)
+
+2. Zuteilungsphase:
+   Vertrag wird zuteilungsreif
+   Guthaben + Anspruch auf Darlehen
+
+3. Darlehensphase:
+   Rückzahlung in monatlichen Raten
+   Zinssatz wurde bei Vertragsabschluss festgelegt!` },
+          { front: `Was bedeutet "Perspektivsparen"? Warum Wohnsparen?`, back: `Wohnsparen = gesamte Finanzierungskosten sinken deutlich
+
+Kundenwünsche:
+• Wohnen nach eigenen Wünschen
+• Unkündbarkeit der Immobilie
+• Keine Mietsteigerung
+• Miete "in die eigene Tasche"
+• Altersvorsorge: mietfrei im Alter wohnen` },
+          { front: `Wie hoch ist die "Steinerne Zusatzrente"?`, back: `Rentnerhaushalte mit Wohneigentum:
+• Durchschnittliche Rente: 1.930 €
+• Durchschnittliche Mietersparnis: 669 €/Monat
+• Das sind 35 % der gesetzlichen Rente!
+
+Wohneigentum wirkt wie eine zusätzliche Rente.` },
+          { front: `Wie groß ist der Vermögensunterschied zwischen Eigentümern und Mietern?`, back: `50–59 Jährige mit 1.700–2.300 € Nettoeinkommen:
+
+Mieter:
+• Immobilienwert: 6.000 €
+• Geldvermögen: 24.000 €
+• Gesamt: 30.000 €
+
+Eigentümer:
+• Immobilienwert: 120.000 €
+• Geldvermögen: 45.000 €
+• Gesamt: 166.000 €
+
+→ Mehr als das Fünffache!` },
+          { front: `Wie funktioniert der Hebel des Wohnsparens (Beispiel 400.000 €)?`, back: `Ohne Vorsparen:
+• 400.000 € Darlehen zu 5,10 %
+• Rate: 2.400 €/Monat
+• 24 Jahre Laufzeit
+• Gesamtkosten: 697.278 €
+
+Mit Wohnsparen:
+• 200.000 € Immobiliendarlehen (4,35 %)
+• 120.000 € Bauspardarlehen (1,25 %)
+• 80.000 € angespartes Guthaben
+• Gesamtbelastung: ~2.470 €/Monat
+• ~14 Jahre Laufzeit
+• Gesamtkosten: 480.036 €
+
+→ Ersparnis: 217.242 €!` },
+          { front: `Welche Kunden-Personas gibt es und welche Bedürfnisse haben sie?`, back: `1. Die Schülerin: Sparen mit Extra-Plus vom Staat
+2. Der Azubi: Mit VL Geld ansparen
+3. Junges Paar mit Kindern: Traum vom Haus
+4. Paar mittleren Alters: Haus geerbt und modernisieren
+5. Älteres Paar: Altersgerecht umbauen` },
+        ]
+      },
+      set12: {
+        title: "SET 12: Zielgruppen & Besonderheiten",
+        subtitle: "Alle Tarife im Vergleich – für wen ist was?",
+        cards: [
+          { front: `KOMPAKT – Welche Zielgruppen werden angesprochen?`, back: `Zielgruppen:
+• Junge Leute
+• Unentschlossene Sparer
+• Generation 50+` },
+          { front: `KOMPAKT – Welche Besonderheiten und besonderen Hinweise gibt es?`, back: `Besonderheiten:
+• Jugendbonus
+• Ideal für Blankodarlehen
+• Teilung möglich
+• Kein Grundbucheintrag nötig` },
+          { front: `KOMFORT – Welche Zielgruppen werden angesprochen?`, back: `Zielgruppen:
+• Kunden mit Wohneigentum
+• Modernisierer
+• Generation 50+
+• Anschlussfinanzierer` },
+          { front: `KOMFORT – Welche Besonderheiten und besonderen Hinweise gibt es?`, back: `Besonderheiten:
+• Variantenwechsel möglich
+• Modernisierungsvorsorge
+• Wüstenrot Wohnkonto Cash
+• Klimabonus
+• Blankodarlehen bis 75.000 €` },
+          { front: `PREMIUM – Welche Zielgruppen werden angesprochen?`, back: `Zielgruppen:
+• Perspektivsparer / Miete in die eigene Tasche
+• Anschlussfinanzierer
+• Modernisierer` },
+          { front: `PREMIUM – Welche Besonderheiten und besonderen Hinweise gibt es?`, back: `Besonderheiten:
+• Günstigstes Darlehen ohne Agio
+• Zinsrabatt ab 100.000 € BSS
+• Wohn-Riester möglich
+• Schnelle Zuteilung
+• Wüstenrot Wohnkonto Cash` },
+          { front: `TREND – Welche Zielgruppen werden angesprochen?`, back: `Zielgruppen:
+• VL und WoP Sparer
+• Junge Leute (Vermögensaufbau)
+• Generation 50+` },
+          { front: `TREND – Welche Besonderheiten und besonderen Hinweise gibt es?`, back: `Besonderheiten:
+• Generationenbonus
+• Staatliche Förderung möglich
+• Jugendbonus
+• Passt sich allen Zinslagen an
+• Sonderzins möglich (entfällt bei Kündigung innerhalb 7 J.)` },
+          { front: `SPEZIAL – Welche Zielgruppen werden angesprochen?`, back: `Zielgruppen:
+• Vermögende Kunden
+• WEGs
+• Unternehmen (Arbeitgeber)
+• Kommunen
+• Baugenossenschaften
+• Banken` },
+          { front: `SPEZIAL – Welche Besonderheiten und besonderen Hinweise gibt es?`, back: `Besonderheiten:
+• Nur eine Zinsvariante
+• Sonderzahlungen und -tilgungen jederzeit möglich
+• Marktgerechte Zuteilungszeiten
+• Planbarkeit und preiswerte Zinssicherung` },
+        ]
+      },
+          set13: {
+        title: "SET 13: Cash-Modelle Grundlagen",
+        subtitle: "Was sind Cash 3 und Cash 5? Der Überblick",
+        cards: [
+          { front: `Was sind Cash-Modelle und welchen Kernnutzen bieten sie?`, back: `Cash-Modelle ermöglichen regelmäßige Auszahlungen zur Finanzierung von Modernisierungen.
+
+Der Kunde kann selbst entscheiden, wie viel er von seinem „Kuchen" will – statt alles auf einmal abzuheben, bekommt er Geld in festen Intervallen für seine Modernisierungsvorhaben.
+
+→ Sichere Modernisierungsvorsorge mit festen Zinssätzen` },
+          { front: `Welche beiden Cash-Modelle gibt es bei Wüstenrot?`, back: `1. CASH 3 – Ratenzahlung
+   → Monatliche Sparrate, Auszahlung in 3 Teilen
+
+2. CASH 5 – Einmalzahlung
+   → Einmalige Einzahlung (12 % der BSS), Auszahlung in 5 Teilen über 15 Jahre` },
+          { front: `Was ist der Hauptunterschied zwischen Cash 3 und Cash 5?`, back: `CASH 3:
+• Monatliche Sparraten (min. 2 ‰ der BSS)
+• Auszahlung in 3 Raten während der Sparphase
+• VL + Wohnungsbauprämie möglich
+
+CASH 5:
+• Einmalzahlung von 12 % der BSS innerhalb 12 Monaten
+•  1,6 ‰ der BSS
+• Keine weiteren Einzahlungen nötig
+• Auszahlung in 5 Raten über 15 Jahre
+• Keine Grundschuld unter 50.000 €` },
+          { front: `Was bedeutet „Modernisierungsvorsorge mit Bausparvertrag"?`, back: `Es handelt sich um ein zinsgünstiges Bauspardarlehen ohne Grundbucheintrag bis 50.000 €.
+
+Vorteile:
+• Planbare und flexible Modernisierung
+• Feste Zinssätze über die gesamte Laufzeit
+• Kein Grundbucheintrag nötig (unter 50.000 €)
+• Günstigere Zinsen als bei herkömmlichen Modernisierungskrediten` },
+          { front: `Welche Vorteile bieten Cash-Modelle gegenüber normalen Krediten?`, back: `• Feste, günstige Zinssätze über die gesamte Laufzeit
+• Kein Grundbucheintrag nötig (bis 50.000 €)
+• Regelmäßige, planbare Auszahlungen
+• Flexibilität bei der Nutzung (Teilsummen, Zeiträume)
+• Staatliche Förderung möglich (VL, Wohnungsbauprämie)
+• Kombinierbar mit Premium und Komfort` },
+          { front: `Mit welchen Tarifen sind Cash-Modelle kompatibel?`, back: `Cash-Modelle sind kompatibel mit:
+• PREMIUM
+• KOMFORT
+
+→ Sie ergänzen diese Tarife um eine strukturierte Modernisierungsfinanzierung` },
+        ]
+      },
+      set14: {
+        title: "SET 14: Wohnkonto Cash 3 im Detail",
+        subtitle: "Ratenzahlung – 3x Auszahlung während der Sparphase",
+        cards: [
+          { front: `Was ist das Wohnkonto Cash 3 und wie funktioniert es?`, back: `Das Wohnkonto Cash 3 ist eine sichere Modernisierungsvorsorge für Immobilienbesitzer.
+
+Ablauf:
+1. Monatliche Sparphase (mindestens 2 ‰ der BSS)
+2. Auszahlung in drei Teilen während der Sparphase
+3. Nach der letzten Auszahlung: Darlehensanspruch
+
+• Günstige Zinsen über die gesamte Laufzeit
+• Flexible Teilsummen und Zeiträume
+• VL-Einbindung + Wohnungsbauprämie möglich` },
+          { front: `Wie hoch ist die Mindestsparrate beim Cash 3?`, back: `Mindestens 2 ‰ der Bauspar-Summe monatlich.
+
+Beispiele:
+• BSS 30.000 € → mind. 60 €/Monat
+• BSS 45.000 € → mind. 90 €/Monat
+
+Hinweis: Der Sparbeitrag kann individuell angepasst werden, aber 2 ‰ ist das Minimum.` },
+          { front: `Cash 3 – Beispielrechnung mit 45.000 € Bauspar-Summe`, back: `BSS: 45.000 €
+Monatlicher Sparbeitrag: 150 €
+
+Ablauf:
+• Jahr 0–5: Sparphase mit 150 €/Monat → Guthaben aufbauen
+• Nach 5 Jahren: 1. Auszahlung 15.000 €
+  → Danach Spar- und Tilgungsphase (150 €/Monat)
+• Nach ~10 Jahren: 2. Auszahlung 15.000 €
+  → Danach wieder Spar- und Tilgungsphase
+• Nach ~15 Jahren: 3. Auszahlung 15.000 €
+  → Danach Tilgungsphase
+
+Jede Rate: 15.000 € (1/3 der BSS)` },
+          { front: `Cash 3 – Beispielrechnung mit 30.000 € Bauspar-Summe`, back: `BSS: 30.000 €
+Monatlicher Sparbeitrag: mind. 60 € (2 ‰)
+
+Ablauf:
+• Sparphase mit monatlicher Rate
+• Nach 3 Jahren: 1. Teil-Auszahlung 10.000 €
+• Nach 6 Jahren: 2. Teil-Auszahlung 10.000 €
+• Nach 9 Jahren: 3. Teil-Auszahlung 10.000 € + Darlehensanspruch
+
+→ Insgesamt 3 Auszahlungen à 10.000 €
+→ Danach Darlehensanspruch verfügbar` },
+          { front: `Kann man beim Cash 3 die Auszahlungsbeträge und Zeiträume flexibel wählen?`, back: `Ja!
+
+• Die Teilsummen sind flexibel wählbar
+• Die Zeiträume zwischen den Auszahlungen sind flexibel
+• Die Bauspar-Summe bestimmt die Höhe der einzelnen Auszahlungen
+
+Wichtig: Die Mindestsparrate von 2 ‰ der BSS muss eingehalten werden.` },
+          { front: `Welche staatlichen Förderungen sind beim Cash 3 möglich?`, back: `• Vermögenswirksame Leistungen (VL) können eingebunden werden
+• Wohnungsbauprämie (WoP) ist möglich
+
+→ Das macht den Cash 3 besonders attraktiv für Arbeitnehmer und junge Sparer.` },
+        ]
+      },
+      set15: {
+        title: "SET 15: Wohnkonto Cash 5 im Detail",
+        subtitle: "Einmalzahlung – 5x Auszahlung über 15 Jahre",
+        cards: [
+          { front: `Was ist das Wohnkonto Cash 5 und wie funktioniert es?`, back: `Das Wohnkonto Cash 5 ist eine Modernisierungsvorsorge mit Einmalzahlung:
+
+1. Einmalzahlung von 12 % der Bauspar-Summe innerhalb der ersten 12 Monate
+2. Keine weiteren Einzahlungen erforderlich
+3. Modernisierungsgeld wird in Teilen über 15 Jahre zinsgünstig ausgezahlt
+4. Beispielsweise steht alle 3 Jahre Modernisierungsgeld zur Verfügung
+
+• Keine Grundschuld unter 50.000 € nötig
+• Kompatibel mit Premium und Komfort` },
+          { front: `Wie hoch ist die Einmalzahlung beim Cash 5?`, back: `12 % der Bauspar-Summe innerhalb der ersten 12 Monate.
+
+Beispiele:
+• BSS 50.000 € → Einmalzahlung 6.000 €
+• BSS 100.000 € → Einmalzahlung 12.000 €
+
+Danach sind keine weiteren Einzahlungen mehr erforderlich!` },
+          { front: `Cash 5 – Beispielrechnung mit 50.000 € Bauspar-Summe`, back: `BSS: 50.000 €
+Einmalzahlung: 6.000 € (12 %, innerhalb 12 Monaten)
+
+Auszahlungen alle 3 Jahre:
+• Nach 3 Jahren: 10.000 €
+• Nach 6 Jahren: 10.000 €
+• Nach 9 Jahren: 10.000 €
+• Nach 12 Jahren: 10.000 €
+• Nach 15 Jahren: 10.000 €
+
+Insgesamt: 50.000 € Modernisierungsgeld über 15 Jahre
+→ Keine weiteren Einzahlungen nach der Ersteinzahlung nötig!` },
+          { front: `Cash 5 – Beispielrechnung mit 100.000 € Bauspar-Summe`, back: `BSS: 100.000 €
+Einmalzahlung: 12.000 € (innerhalb 12 Monaten)
+
+Ablauf:
+• Einmalzahlung 12.000 € → Guthaben ca. 10.000 €
+• Nach 3 Jahren: 1. Darlehensauszahlung ca. 10.000 €
+  → 160 € monatlicher Zins- und Tilgungsbeitrag
+  → Tilgungsphase: 5 Jahre / 4 Monate
+• Nach 6 Jahren: 2. Darlehensauszahlung ca. 10.000 €
+• Nach 9 Jahren: 3. Darlehensauszahlung ca. 10.000 €
+• Nach 12 Jahren: 4. Darlehensauszahlung ca. 10.000 €
+• Nach 15 Jahren: 5. Darlehensauszahlung ca. 10.000 €
+
+Guthaben ca. 10.000 € wird am Ende ausbezahlt.` },
+          { front: `Wie oft und in welchem Rhythmus kann beim Cash 5 ausgezahlt werden?`, back: `Beim Cash 5 steht das Modernisierungsgeld typischerweise alle 3 Jahre zur Verfügung:
+
+• Nach 3 Jahren
+• Nach 6 Jahren
+• Nach 9 Jahren
+• Nach 12 Jahren
+• Nach 15 Jahren
+
+→ 5 Auszahlungen über einen Zeitraum von 15 Jahren
+→ Jede Auszahlung wird anschließend in einer Tilgungsphase zurückgezahlt` },
+          { front: `Was passiert nach den 15 Jahren beim Cash 5?`, back: `Nach 15 Jahren und 5 Auszahlungen:
+
+• Das verbleibende Guthaben (ca. 10.000 € bei BSS 100.000 €) wird ausbezahlt
+• Alle Darlehensteile sind in ihren Tilgungsphasen zurückgezahlt
+• Der Kunde hat sein gesamtes Modernisierungsbudget über 15 Jahre verteilt genutzt
+
+→ Langfristige, planbare Modernisierungsfinanzierung ohne weitere Einzahlungen nach dem Start` },
+        ]
+      },
+      set16: {
+        title: "SET 16: Verkaufsansätze, Zielgruppen & Kosten",
+        subtitle: "Modernisierung ansprechen – W-Fragen & Future Pacing",
+        cards: [
+          { front: `Welche Zielgruppen sind für Cash-Modelle ideal?`, back: `• Immobilieneigentümer mit Modernisierungsbedarf
+• Altersgruppe 45–55 Jahre mit Eigentum
+• Kunden, die Erhalt und Wertsteigerung ihres Eigentums wollen
+• Kunden mit altersgerechtem Umbau-Bedarf
+• Kunden mit energetischem Umbau-Bedarf (Bad, Heizung, Fenster, Dach)
+• Kunden mit kurzfristigem Modernisierungsbedarf
+
+→ Kompatibel mit Premium- und Komfort-Tarifen` },
+          { front: `Wie spreche ich ein Modernisierungsvorhaben beim Kunden an?`, back: `Ansatz:
+1. Perfekte Lösung finden – das Motiv des Kunden erkennen
+2. W-Fragen stellen (Was, Wann, Warum, Wie)
+3. Emotional ansprechen + Future Pacing
+
+Beispiel-Fragen:
+• „Wie lange wohnen Sie schon in Ihrem Haus?"
+• „Was würden Sie gerne als Nächstes modernisieren?"
+• „Wie stellen Sie sich Ihr Zuhause in 10 Jahren vor?"
+
+→ Ziel: Den Kunden in die Zukunft versetzen und das Bedürfnis wecken` },
+          { front: `Was ist Future Pacing im Verkaufsgespräch?`, back: `Future Pacing bedeutet, den Kunden mental in die Zukunft zu versetzen:
+
+• „Stellen Sie sich vor, Ihr Bad ist barrierefrei – wie fühlt sich das an?"
+• „In 5 Jahren zahlen Sie keine steigenden Energiekosten mehr, weil Ihre Heizung modern ist..."
+
+→ Der Kunde erlebt die positiven Effekte der Modernisierung vor seinem geistigen Auge
+→ Das schafft emotionale Bindung und Handlungsdrang` },
+          { front: `Was kosten typische Modernisierungsmaßnahmen?`, back: `Dachsanierung (inkl. Dachdämmung): ca. 30.000 €
+Dachausbau: ca. 25.000 €
+Neues Bad: ca. 18.000 €
+Neue Einbauküche: ca. 16.000 €
+Photovoltaik (Stromerzeugung): ca. 15.000 €
+Elektroinstallationen: ca. 15.000 €
+Sonnenkollektoren (Warmwasser + Heizung): ca. 11.000 €
+Fensteraustausch: ca. 10.000 €
+Neuer Außenputz: ca. 10.000 €
+Garage (Beton-Fertiggarage): ab 9.000 €
+Kellerdeckendämmung: ca. 6.000 €
+Sauna: ab 5.000 €
+Carport: ab 4.000 €` },
+          { front: `Welche Rolle spielt die Energiewende beim Modernisieren?`, back: `Energiewende Wohngebäudebestand – Enormes Potenzial:
+
+• Jede 3. Eigentumswohnung, jedes 2. Eigenheim hat Effizienzklasse E oder schlechter
+• 2,5 Mio. Heizungen sind 30 Jahre alt und älter
+• Noch mehr als jede zweite Wohneinheit wird mit Öl beheizt
+• Jede fünfte Wohneinheit wird mit Gas beheizt
+
+→ Bis zu 70 % Förderung möglich (BEG – Bundesförderung für effiziente Gebäude)
+→ Ein riesiger Markt für Modernisierungsfinanzierung!` },
+          { front: `Welche Fördermöglichkeiten gibt es für Modernisierungen?`, back: `• BEG (Bundesförderung für effiziente Gebäude): bis zu 70 % Förderung
+• Wohnungsbauprämie (WoP)
+• Vermögenswirksame Leistungen (VL)
+
+Quellen:
+• ARGE für zeitgemäßes Bauen
+• Statistisches Bundesamt
+
+→ Cash-Modelle ermöglichen es, diese Förderungen optimal mit der Finanzierung zu kombinieren` },
+        ]
+      },
+      set17: {
+    title: "SET 17: 100 Verkaufsansätze – Das komplette Vertriebs-Playbook",
+    subtitle: "Jede Karte ein Verkaufsansatz mit psychologischem Hack für Tarife & Cash-Modelle",
+    cards: [
+      // ===== KOMPAKT (1–20) =====
+      { front: `KOMPAKT – Azubi mit 50 €/Monat: Wie starte ich das Gespräch mit Future Pacing?`, back: `»Stellen Sie sich vor, Sie haben in 3 Jahren schon 2.000 € angespart – ganz nebenbei, ohne dass es wehtut. Ihr Führerschein ist bezahlt, die erste eigene Wohnung steht vor der Tür. Wäre es eine schlechte Idee, heute mit 50 € im Monat anzufangen?«
+
+Technik: Future Pacing + Negativierung
+Ziel: Das Best-Case-Szenario pflanzen, bevor der Preis thematisiert wird.` },
+      { front: `KOMPAKT – Student sagt: „Ich habe keine Ahnung von Bausparen.“ Wie baue ich Vertrauen auf?`, back: `»Herr Maier, was mir zu Beginn wichtig ist: Wir finden heute gemeinsam eine Lösung – oder eben auch nicht. Wenn Kompakt nicht passt, sage ich es Ihnen. Keine Lösung ist auch eine Lösung. Wir agieren als Team, nicht jeder gegen jeden.«
+
+Technik: Team-Ansatz + Ehrlichkeit
+Ziel: Kontrollverlustgefühle eliminieren, Vertrauen in den ersten 30 Sekunden aufbauen.` },
+      { front: `KOMPAKT – Schülerin mit Wohnungsbauprämie: Wie hole ich das kleine Commitment?`, back: `»Sie bekommen die WoP vom Staat – das ist schon mal ein starker Start. Glauben Sie, dass Sie 30 € im Monat investieren können, um aus diesem Staatszuschlag später echtes Kapital zu machen?«
+
+Technik: Kleines Commitment (100 % mit Ja beantwortbar)
+Ziel: Vor dem Abschluss psychologisch bereits „geschlossen“ haben.` },
+      { front: `KOMPAKT – Unentschlossener Sparer: Wie nutze ich die Negativierung statt „Wollen Sie...?“`, back: `»Wenn wir Ihnen mit Kompakt einen einfachen Einstieg ohne Papierkrieg ermöglichen könnten – wäre es dann Ihrer Meinung nach eine schlechte Idee, sich das einfach mal anzuschauen?«
+
+Technik: Negativierung
+Ziel: Der Lead behält die Kontrolle, sagt aber trotzdem Ja.` },
+      { front: `KOMPAKT – Erste eigene Wohnung: Wie finde ich den Pain-Point bildlich?`, back: `»Stellen Sie sich vor: Sie zahlen in 10 Jahren immer noch Miete. Die steigt jedes Jahr. Ihr Vermieter kündigt die Modernisierungsumlage an. Und Sie? Sie haben nichts angelegt. Mit Kompakt bauen Sie ab heute Ihr eigenes Vermögen auf – statt die Miete eines Fremden zu finanzieren.«
+
+Technik: Pain-Point bildlich + Miete-in-die-eigene-Tasche
+Ziel: Die Kosten des Nicht-Handelns spürbar machen.` },
+      { front: `KOMPAKT – Konfirmationsgeld anlegen: Wie ermögliche ich Mitgestaltung?`, back: `»Meiner Meinung nach ist Kompakt mit Jugendbonus hier perfekt für Sie. Aber bei der Sparrate bin ich mir noch unsicher – was würde für Sie besser passen: 25 € monatlich oder eher eine Einmalanlage des gesamten Konfirmationsgeldes?«
+
+Technik: Mitgestaltung + zwei Optionen
+Ziel: Der Kunde wird süchtig nach seiner eigenen Idee, weil er sie mitgebaut hat.` },
+      { front: `KOMPAKT – Eltern zahlen für ihr Kind ein: Wie nutze ich „sicherlich“?`, back: `»Sie wollen Ihrem Kind eine finanzielle Starthilfe geben – das ist sicherlich eine der besten Entscheidungen, die Eltern treffen können. Sie sind sicherlich offen dafür, wie aus 30 €/Monat später echtes Vermögen wird, oder?«
+
+Technik: „Sicherlich“ + Assumptive Close
+Ziel: Widerspruch wird psychologisch vermieden, Zustimmung ist der bequemere Weg.` },
+      { front: `KOMPAKT – Kleines Budget: Wie drehe ich Preis in Kosten des Nicht-Handelns?`, back: `»Meinen Sie jetzt den Preis von 50 €/Monat – oder meinen Sie die Kosten, wenn Sie in 5 Jahren ohne Vermögen dastehen und die Miete um 20 % gestiegen ist? Der Preis ist die Investition. Die Kosten entstehen, wenn Sie nicht handeln.«
+
+Technik: Preis vs. Kosten
+Ziel: Der Betrag wird klein, die Opportunitätskosten werden riesig.` },
+      { front: `KOMPAKT – „Ich muss erst noch drüber nachdenken.“ Wie finde ich den wahren Grund?`, back: `»Ich verstehe das vollkommen. Damit ich es besser einschätzen kann: Fehlt Ihnen noch eine Information – oder ist es eher das Gefühl, dass der Zeitpunkt noch nicht stimmt? Was wäre für Sie der nächste sinnvolle Schritt?«
+
+Technik: Offene Frage + Entscheidungsoptionen
+Ziel: Vorwand von echtem Einwand trennen und direkt behandeln.` },
+      { front: `KOMPAKT – „Das ist mir zu teuer.“ Wie rechne ich die Ersparnis vor?`, back: `»Okay, verstehe. Meinen Sie den Preis von 50 €/Monat oder die Kosten, wenn Sie in 10 Jahren ohne Rücklage dastehen? Rechnen wir es mal durch: 50 €/Monat sind 600 €/Jahr. Mit Jugendbonus und Zinsen sind das in 5 Jahren über 3.500 €. Die Kosten des Nicht-Handelns: Sie haben nichts. Was fühlt sich für Sie stimmiger an?«
+
+Technik: Preis vs. Kosten + Rechnung
+Ziel: Der Kunde sieht Zahlen, nicht nur einen Preis.` },
+      { front: `KOMPAKT – Junge Leute ansprechen: Wie nutze ich offene Fragen statt geschlossener?`, back: `»Nicht: „Wollen Sie anfangen?“ – Sondern: „Was wäre für Sie der ideale erste Schritt, um finanziell unabhängiger zu werden?“ Und dann: „Wie sind Sie überhaupt auf die Idee gekommen, jetzt anzufangen?“
+
+Technik: Offene W-Fragen + Knüpfen
+Ziel: Der Kunde redet, Sie hören – und er findet Sie charismatisch.` },
+      { front: `KOMPAKT – Generation 50+: Wie verkaufe ich den einfachen Einstieg?`, back: `»Herr Maier, Sie haben sicherlich schon viele Finanzprodukte gesehen. Kompakt ist anders: kein Grundbucheintrag, keine komplizierten Varianten, einfach von Anfang bis Ende. Wäre es für Sie eine schlechte Idee, sich das in Ruhe anzusehen?«
+
+Technik: „Sicherlich“ + Negativierung + Einfachheit
+Ziel: Die Angst vor Komplexität wird genommen.` },
+      { front: `KOMPAKT – Follow-up nach dem ersten Gespräch: Wie bleibe ich im Kopf?`, back: `»Herr Maier, ich muss Ihnen kurz was sagen: Ich habe heute einen jungen Azubi beraten, der genau in Ihrer Situation war – und musste direkt an Sie denken. Wie läuft Ihr Projekt „erste eigene Wohnung“ aktuell?«
+
+Technik: „Ich musste an Sie denken“
+Ziel: Vertrauen und emotionale Bindung durch Personalisierung.` },
+      { front: `KOMPAKT – Blankodarlehen erklären: Wie drehe ich den Einwand in ein Argument?`, back: `»Ah, Sie haben schon von Blankodarlehen gehört? Perfekt. Davon bin ich ausgegangen. Und genau deswegen rufe ich an: Kompakt ist ideal dafür. Ist es für Sie relevant, einfach mal zu schauen, wie das ohne Grundbucheintrag funktioniert?«
+
+Technik: Einwand-Drehung (positiv anknüpfen)
+Ziel: Widerstand wird zu Interesse.` },
+      { front: `KOMPAKT – Teilung möglich: Wie biete ich zwei Optionen?`, back: `»Wir können den Vertrag so aufsetzen – oder wir teilen ihn direkt in zwei kleinere Verträge auf, damit Sie flexibler bleiben. Was fühlt sich für Sie stimmiger an: Ein Vertrag oder die Teilung?«
+
+Technik: Zwei Optionen (A oder B)
+Ziel: Der Kunde entscheidet sich für eine Variante – aber gegen „Nein“.` },
+      { front: `KOMPAKT – „Ich habe kein Interesse.“ Wie re-frame ich sofort?`, back: `»Das verstehe ich vollkommen, Herr Maier. Sie bekommen bestimmt viele Angebote. Was mir wichtig ist: Bei unserem letzten Kunden war das Problem, dass er mit 25 ohne Vermögen dastand. Wie sieht es bei Ihnen aus – ähnlich oder anders? Und auf welchem Stand sind Sie gerade beim Thema Vorsorge?«
+
+Technik: D-Frame (Verständnis) + Re-Frame + offene Frage
+Ziel: Der Lead qualifiziert sich selbst.` },
+      { front: `KOMPAKT – Kein Grundbucheintrag nötig: Wie nutze ich das als Argument?`, back: `»Stellen Sie sich vor: Sie brauchen schnell 10.000 € für die erste eigene Einbauküche. Bei einem normalen Kredit dauert das Wochen – Grundbuch, Notar, Gebühren. Mit Kompakt haben Sie das Blankodarlehen in der Tasche, ohne dass Ihr Name irgendwo ins Grundbuch muss. Wie würde sich das anfühlen?«
+
+Technik: Future Pacing + Schmerzfreiheit
+Ziel: Die Einfachheit wird zum Alleinstellungsmerkmal.` },
+      { front: `KOMPAKT – Regelmäßiges Sparen: Wie hole ich das Commitment?`, back: `»Wir sind uns einig, dass Kompakt der perfekte Einstieg ist. Eine Frage: Glauben Sie, dass Sie diese 50 € monatlich investieren können, um dieses Ergebnis zu erzielen?«
+
+Technik: Commitment + konkrete Rate
+Ziel: Kleines Ja führt zum großen Ja.` },
+      { front: `KOMPAKT – Charisma im Smalltalk: Wie knüpfe ich an die letzten 2 Wörter an?`, back: `»Kunde: „Ich war letzte Woche in Heidelberg.“ Sie: „Heidelberg ist wirklich schön. Was hat Ihnen dort am besten gefallen?“ – Kunde antwortet. Sie knüpfen an die letzten 2 Wörter an und fragen offen weiter. Nie geschlossene Fragen!
+
+Technik: Knüpfen + offene Fragen
+Ziel: Gesprächsfluss bleibt natürlich, Sie wirken charismatisch.` },
+      { front: `KOMPAKT – Vermögensaufbau: Wie nutze ich die „Steinerne Zusatzrente“?`, back: `»Herr Maier, stellen Sie sich vor: Sie sind 67, Ihre Rente ist da – und Sie zahlen keine Miete mehr. Denn Sie haben mit 25 angefangen. Die durchschnittliche Mietersparnis: 669 €/Monat. Das sind 35 % Ihrer Rente zusätzlich. Wäre es eine schlechte Idee, heute den Grundstein dafür zu legen?«
+
+Technik: Future Pacing + Zahlen + Negativierung
+Ziel: Langfristiger Nutzen wird sofort spürbar.` },
+
+      // ===== KOMFORT (21–40) =====
+      { front: `KOMFORT – Modernisierung: Wie finde ich den Pain-Point mit W-Fragen?`, back: `»Herr Maier, wie lange wohnen Sie schon in Ihrem Haus? – 15 Jahre. Was würden Sie gerne als Nächstes modernisieren? – Das Dach. Wie stellen Sie sich Ihr Zuhause in 10 Jahren vor, wenn nichts passiert?«
+
+Technik: W-Fragen + Future Pacing (negativ)
+Ziel: Der Kunde sieht das Problem selbst – und will die Lösung.` },
+      { front: `KOMFORT – Dach sanieren: Wie pitche ich die Modernisierungsvariante?`, back: `»Stellen Sie sich vor: Ihr Dach ist saniert, die Heizung läuft auf Erneuerbare – und Sie zahlen dafür nur 0,45 % Zinsen. In 5 Jahren ist das Darlehen abbezahlt. Wie würde sich das anfühlen, wenn die Energiewende Ihr Haus bereits bezahlt hat?«
+
+Technik: Future Pacing + niedrigster Zins
+Ziel: Die Modernisierung wird zum emotionalen Erlebnis.` },
+      { front: `KOMFORT – Bad barrierefrei: Wie biete ich die zwei Varianten an?`, back: `»Wir haben zwei Wege: Die Modernisierungsvariante mit 0,45 % und schneller Tilgung – oder die Niedrige-Rate-Variante mit 1,95 % und nur 3,5 ‰/Monat. Was passt Ihrer Lebenssituation besser: schnell schuldenfrei oder niedrige monatliche Belastung?«
+
+Technik: Zwei Optionen + Anpassung an die Situation
+Ziel: Der Kunde fühlt sich verstanden, nicht verkauft.` },
+      { front: `KOMFORT – Heizung erneuern: Wie nutze ich den Klimabonus?`, back: `»Sie erneuern Ihre Heizung – sicherlich wollen Sie dabei auch profitieren, oder? Der Klimabonus macht Komfort hier besonders attraktiv. Glauben Sie, dass Sie die 10 ‰ Tilgung stemmen können, um in 5 Jahren schuldenfrei zu sein?«
+
+Technik: „Sicherlich“ + Commitment + Klimabonus
+Ziel: Staatliche Förderung wird zum zusätzlichen Motivator.` },
+      { front: `KOMFORT – Photovoltaik: Wie drehe ich „Zu teuer“ in ein Argument?`, back: `»Ah, Sie haben sich schon mit Photovoltaik beschäftigt? Perfekt. Davon bin ich ausgegangen. Und genau deswegen rufe ich an: Mit Komfort-Modernisierung zahlen Sie 0,45 % Zinsen – ein Bankkredit kostet 6–8 %. Ist es für Sie relevant, einfach mal zu rechnen, wie viel das spart?«
+
+Technik: Einwand-Drehung + Zahlenvergleich
+Ziel: Der Kunde rechnet selbst – und kommt zu Ihrem Ergebnis.` },
+      { front: `KOMFORT – „Ich muss noch mit meiner Frau sprechen.“ Wie verhindere ich das?`, back: `»Herr Maier, bevor wir weiterreden: Gibt es außer Ihnen noch jemanden, den diese Entscheidung interessieren könnte? Dann holen wir die Person direkt dazu. Was denken Sie: Wenn Ihre Frau jetzt hier säße – welche Fragen hätte sie?«
+
+Technik: Entscheidungsvorbeugung + Mitgestaltung
+Ziel: Der Einwand wird vorbeugend neutralisiert.` },
+      { front: `KOMFORT – Variantenwechsel: Wie verkaufe ich Flexibilität?`, back: `»Meiner Meinung nach ist die Modernisierungsvariante perfekt für Sie. Aber bei der Tilgung bin ich mir noch unsicher. Was müssten wir anpassen, damit es für Sie perfekt ist – schneller tilgen oder niedrigere Rate?«
+
+Technik: Mitgestaltung + zwei Optionen
+Ziel: Der Kunde baut seine eigene Lösung – und will sie haben.` },
+      { front: `KOMFORT – Niedrige Rate für Rentner: Wie nutze ich Negativierung?`, back: `»Wenn wir Ihnen mit 3,5 ‰ monatlich die Möglichkeit geben, barrierefrei zu wohnen – ohne dass Ihre Rente belastet wird – wäre es dann eine schlechte Idee, sich das anzusehen?«
+
+Technik: Negativierung + niedrige Belastung
+Ziel: Die Angst vor hohen Raten wird eliminiert.` },
+      { front: `KOMFORT – Eigentümer bleiben: Wie nutze ich Future Pacing?`, back: `»Stellen Sie sich vor: In 10 Jahren wohnen Sie immer noch in Ihrem geliebten Haus – aber mit neuer Heizung, neuem Dach und barrierefreiem Bad. Sie mussten nicht umziehen, nicht neu eingewöhnen. Der Wert Ihres Hauses ist gestiegen. Was wäre das für ein Gefühl?«
+
+Technik: Future Pacing + Emotionalisierung
+Ziel: Der Kunde erlebt die Zukunft – und will sie kaufen.` },
+      { front: `KOMFORT – Modernisierungsvorsorge: Wie baue ich Vertrauen auf?`, back: `»Herr Maier, ich bin kein Fan von typischen Verkaufsgesprächen. Deswegen klären wir das direkt: Wenn Komfort für Ihre Sanierung nicht passt, sage ich es Ihnen. Wir suchen als Team eine Lösung – oder eben nicht. Versprechen.«
+
+Technik: Team-Ansatz + Ehrlichkeit
+Ziel: Der Vertriebler-Abwehr-Reflex wird durchbrochen.` },
+      { front: `KOMFORT – Energiewende-Potenzial: Wie mache ich den Markt spürbar?`, back: `»Jede zweite Wohneinheit wird mit Öl oder Gas beheizt. 2,5 Millionen Heizungen sind über 30 Jahre alt. Bis zu 70 % Förderung sind möglich. Stellen Sie sich vor, Sie sind einer der ersten in Ihrer Straße, der das nutzt. Wie wirkt sich das auf Ihren Strom- und Heizungskosten aus?«
+
+Technik: Pain-Point (Markt) + Exklusivität + Future Pacing
+Ziel: Der Kunde will dazugehören, nicht zurückfallen.` },
+      { front: `KOMFORT – Fenster austauschen: Wie hole ich das Commitment?`, back: `»Wir sind uns einig, dass neue Fenster Ihre Energiekosten senken. Glauben Sie, dass Sie diese 6 ‰ monatlich investieren können, um in 5 Jahren keine Heizkosten mehr zu verschwenden?«
+
+Technik: Commitment + konkreter Nutzen
+Ziel: Kleines Ja führt zum großen Ja.` },
+      { front: `KOMFORT – Altersgerecht umbauen: Wie nutze ich „sicherlich“?`, back: `»Sie wollen im Alter in Ihrem Zuhause bleiben – das ist sicherlich der Wunsch jedes Menschen, der sein Leben lang gearbeitet hat. Sie sind sicherlich offen dafür, wie wir das mit niedrigen Raten ermöglichen, oder?«
+
+Technik: „Sicherlich“ + emotionale Bindung
+Ziel: Widerspruch ist unbequem, Zustimmung ist naheliegend.` },
+      { front: `KOMFORT – Anschlussfinanzierung: Wie nutze ich zwei Geschwindigkeiten?`, back: `»Sie können wählen: Schnell mit 0,45 % + 10 ‰ tilgen – oder langsam mit 1,95 % + 3,5 ‰. Was fühlt sich für Ihre aktuelle Lebenssituation stimmiger an?«
+
+Technik: Zwei Optionen + Situationsbezug
+Ziel: Der Kunde entscheidet sich aktiv – und fühlt sich kompetent.` },
+      { front: `KOMFORT – Wohnkonto Cash: Wie verknüpfe ich mit Komfort?`, back: `»Stellen Sie sich vor: Sie modernisieren nicht alles auf einmal, sondern bekommen alle 3 Jahre eine Auszahlung für das nächste Projekt. Erst die Heizung, dann die Fenster, dann das Bad – alles mit festen Zinsen. Wäre das nicht die stressfreieste Art zu sanieren?«
+
+Technik: Future Pacing + Cash-Modell-Verknüpfung
+Ziel: Die Modernisierung wird planbar und entspannt.` },
+      { front: `KOMFORT – „Wir haben schon einen Handwerker.“ Wie drehe ich das?`, back: `»Perfekt, davon bin ich ausgegangen. Und genau deswegen rufe ich an: Wir kümmern uns nicht um den Handwerker, sondern um die Finanzierung. Ist es für Sie relevant, einfach mal zu schauen, ob 0,45 % Zinsen besser sind als ein Kredit über die Bank?«
+
+Technik: Einwand-Drehung (Komplement statt Konkurrenz)
+Ziel: Der Handwerker bleibt, die Finanzierung wird besser.` },
+      { front: `KOMFORT – Wertsteigerung: Wie nutze ich die Abschluss-Frage?`, back: `»Herr Maier, noch mal kurz zusammengefasst: Ihnen ist wichtig, energetisch zu sanieren, den Wert Ihres Hauses zu steigern und niedrige Raten zu haben. Wir liefern das mit Komfort. Gibt es noch Informationen, die wir klären müssen, bevor wir gemeinsam starten?«
+
+Technik: Pain-Zusammenfassung + Closing-Frage
+Ziel: Der Kunde hat keine Argumente mehr gegen den Start.` },
+      { front: `KOMFORT – Follow-up nach Angebot: Wie bleibe ich einzigartig?`, back: `»Herr Maier, ich muss Ihnen was sagen: Ich habe heute eine Sanierung in Ihrem Stadtteil gesehen und musste direkt an Sie denken. Wie läuft Ihr Projekt ‚neue Heizung‘ aktuell?«
+
+Technik: „Ich musste an Sie denken“
+Ziel: Kein Standard-Follow-up, sondern persönliche Bindung.` },
+      { front: `KOMFORT – Keine Grundschuld unter 50.000 €: Wie nutze ich das als Argument?`, back: `»Stellen Sie sich vor: Sie bekommen 30.000 € für Ihr neues Bad – ohne dass Ihr Haus belastet wird. Kein Notar, kein Grundbuchamt, kein Gerangel. Nur der Vertrag und die Auszahlung. Wie würde sich das anfühlen?«
+
+Technik: Future Pacing + Schmerzfreiheit
+Ziel: Die Einfachheit wird zum Alleinstellungsmerkmal.` },
+      { front: `KOMFORT – Abrupte Themawechsel für Smalltalk-Ende: Wie komme ich zum Punkt?`, back: `»Herr Maier, das ist jetzt mal ein anderes Thema – was sagen Sie zu den aktuellen Förderungen für Heizungen? Haben Sie sich da schon Gedanken gemacht?«
+
+Technik: Abrupter Themawechsel + offene Frage
+Ziel: Höflich, aber zielgerichtet zum Geschäft kommen.` },
+
+      // ===== PREMIUM (41–60) =====
+      { front: `PREMIUM – Zinssicherung: Wie mache ich den Pain-Point der steigenden Zinsen spürbar?`, back: `»Stellen Sie sich vor: Sie bauen in 2 Jahren. Der Bauzins ist dann bei 5 %. Sie zahlen 400.000 € zurück – statt 300.000 €. Mit Premium sichern Sie sich heute 1,25 %. Die Kosten des Nicht-Handelns: 100.000 €. Wäre es eine schlechte Idee, das zu verhindern?«
+
+Technik: Pain-Point (Zahlen) + Future Pacing + Negativierung
+Ziel: Die Zinssicherung wird zur Pflicht, nicht zur Option.` },
+      { front: `PREMIUM – Bester Zins 1,25 %: Wie nutze ich Exklusivität?`, back: `»Ab 100.000 € Bausparsumme gibt es 1,25 % – den besten Zins am Markt. Stellen Sie sich vor, Sie erzählen Ihrem Bankberater, dass Sie den Zins schon vor 3 Jahren gesichert haben. Wie würde er reagieren?«
+
+Technik: Exklusivität + Future Pacing + sozialer Vergleich
+Ziel: Der Kunde will dazugehören, nicht zurückfallen.` },
+      { front: `PREMIUM – Kein Agio: Wie hole ich das Commitment?`, back: `»Wir sind uns einig, dass 1,25 % unschlagbar sind. Eine Frage: Glauben Sie, dass Sie die 4 ‰ monatlich investieren können, um diese Zinsen für die nächsten Jahre zu sichern?«
+
+Technik: Commitment + konkrete Rate
+Ziel: Kleines Ja zum großen Abschluss.` },
+      { front: `PREMIUM – Große Summe ab 100k: Wie nutze ich Negativierung?`, back: `»Wenn wir Ihnen mit Premium den niedrigsten Sollzins Deutschlands ermöglichen könnten – wäre es dann eine schlechte Idee, sich das einfach mal durchrechnen zu lassen?«
+
+Technik: Negativierung + Superlativ
+Ziel: Der Kunde sagt Ja, ohne sich verkauft zu fühlen.` },
+      { front: `PREMIUM – Anschlussfinanzierung: Wie nutze ich „sicherlich“?`, back: `»Sie wollen nach der Zinsbindung umschulden – sicherlich wollen Sie dabei nicht mehr zahlen als nötig, oder? Premium hat kein Agio und 1,25 %. Sie sind sicherlich offen für eine konkrete Rechnung?«
+
+Technik: „Sicherlich“ + Preisvorteil
+Ziel: Widerspruch ist unlogisch, Zustimmung ist naheliegend.` },
+      { front: `PREMIUM – Wohn-Riester: Wie drehe ich den Einwand „Zu kompliziert“?`, back: `»Ah, Sie haben sich schon mit Riester beschäftigt? Perfekt. Davon bin ich ausgegangen. Genau deswegen rufe ich an: Bei Premium ist Wohn-Riester integriert. Ist es für Sie relevant, einfach mal zu schauen, wie Staatliche Zulage + niedriger Zins zusammenwirken?«
+
+Technik: Einwand-Drehung + Vereinfachung
+Ziel: Komplexität wird zur Komplettlösung.` },
+      { front: `PREMIUM – Perspektivsparer: Wie stelle ich die offene Frage?`, back: `»Nicht: „Wollen Sie sparen?“ – Sondern: „Was wäre für Sie der ideale Zeitpunkt, um die Zinsen für Ihr Traumhaus zu sichern?“ Und dann: „Wie stellen Sie sich das Leben in Ihrem eigenen Haus vor?“«
+
+Technik: Offene W-Fragen + Vision
+Ziel: Der Kunde malt seine Zukunft – und Premium ist der Pinsel.` },
+      { front: `PREMIUM – Miete in eigene Tasche: Wie nutze ich Future Pacing?`, back: `»Stellen Sie sich vor: In 15 Jahren zahlen Sie keine Miete mehr. Stattdessen wohnen Sie in Ihrem eigenen Haus – und die 1.200 € Miete fließen in Ihre Tasche. Das sind 14.400 €/Jahr. Was würden Sie mit diesem Geld machen?«
+
+Technik: Future Pacing + konkrete Zahlen + Fantasie
+Ziel: Der Kunde will diese Zukunft – jetzt.` },
+      { front: `PREMIUM – Schnelle Zuteilung: Wie biete ich zwei Optionen?`, back: `»Wir können warten, bis der Markt sich beruhigt – oder wir sichern heute 1,25 % und Sie sind in 18 Monaten zuteilungsbereit. Was fühlt sich für Sie stimmiger an: Warten oder Sichern?«
+
+Technik: Zwei Optionen + Dringlichkeit
+Ziel: Handeln wird zur logischen Wahl.` },
+      { front: `PREMIUM – Familie mit Kindern: Wie nutze ich den Team-Ansatz?`, back: `»Herr Maier, Frau Maier – wir suchen heute gemeinsam die beste Lösung für Ihre Familie. Wenn ich der Meinung bin, dass Premium nicht passt, sage ich es. Versprochen. Gibt es außer Ihnen beiden noch jemanden, den das interessieren könnte?«
+
+Technik: Team-Ansatz + Entscheidungsvorbeugung
+Ziel: Alle Beteiligten sind im Boot, niemand kann später blockieren.` },
+      { front: `PREMIUM – Beamte: Wie nutze ich das sichere Einkommen?`, back: `»Sie haben ein sicheres Einkommen – sicherlich wollen Sie das nutzen, um langfristig Vermögen aufzubauen, oder? Mit Premium und Wohn-Riester kombinieren Sie Sicherheit mit dem besten Zins. Was halten Sie davon?«
+
+Technik: „Sicherlich“ + Status quo nutzen
+Ziel: Das sichere Einkommen wird zum Argument für langfristiges Handeln.` },
+      { front: `PREMIUM – Selbstständig: Wie drehe ich „Zu unsicher“?`, back: `»Ah, Sie sind selbstständig – perfekt. Davon bin ich ausgegangen. Genau deswegen rufe ich an: Premium sichert Ihnen den Zins unabhängig von Ihrem Einkommensschwankungen. Ist es für Sie relevant, einfach mal zu rechnen, wie viel Planbarkeit das schafft?«
+
+Technik: Einwand-Drehung + Planbarkeit
+Ziel: Unsicherheit wird zum Grund für Zinssicherung.` },
+      { front: `PREMIUM – Haus bauen: Wie ermögliche ich Mitgestaltung?`, back: `»Meiner Meinung nach ist Premium mit 1,25 % hier perfekt. Aber bei der Bausparsumme bin ich mir noch unsicher. Was wäre für Sie der optimale Betrag – 100.000 €, 150.000 € oder mehr? Was müssten wir anpassen?«
+
+Technik: Mitgestaltung + offene Optionen
+Ziel: Der Kunde baut sein eigenes Paket – und will es haben.` },
+      { front: `PREMIUM – Zinsen steigen: Wie mache ich den Pain-Point bildlich?`, back: `»Stellen Sie sich vor: Sie stehen auf dem Bauplatz in 2 Jahren. Der Kreditvermittler sagt: ‚Der Zins ist jetzt bei 4,5 %.‘ Sie drehen sich um und denken: ‚Hätte ich vor 2 Jahren abgeschlossen...‘ Mit Premium verhindern Sie genau diesen Moment. Wie würde sich das anfühlen?«
+
+Technik: Bildliche Sprache + Future Pacing (negativ)
+Ziel: Der Kunde fühlt den Schmerz des Nicht-Handelns – jetzt.` },
+      { front: `PREMIUM – 217.242 € Ersparnis: Wie nutze ich „Was wäre wenn“?`, back: `»Angenommen, wir könnten Ihnen bei 400.000 € Finanzierung 217.242 € sparen – wäre es dann eine schlechte Idee, heute zu starten? Stellen Sie sich vor, was Sie mit diesem Geld machen könnten: Weltreise, Kinderstudium, früher in Rente...«
+
+Technik: „Was wäre wenn“ + Negativierung + Fantasie
+Ziel: Die Ersparnis wird zum emotionalen Erlebnis.` },
+      { front: `PREMIUM – Steinerne Zusatzrente: Wie nutze ich Zahlen emotional?`, back: `»Rentner mit Wohneigentum sparen 669 €/Monat – das sind 35 % ihrer Rente. Stellen Sie sich vor: Sie sind 67 und haben diese zusätzliche ‚Rente‘. Wie verändert das Ihren Lebensstandard?«
+
+Technik: Future Pacing + konkrete Zahlen + Emotionalisierung
+Ziel: Die Zahl wird zur Vision.` },
+      { front: `PREMIUM – Sicheres Einkommen: Wie hole ich das Commitment?`, back: `»Wir sind uns einig, dass Zinssicherung Ihre Familie schützt. Glauben Sie, dass Sie diese 5 ‰ monatlich investieren können, um Ihr Traumhaus zu finanzieren?«
+
+Technik: Commitment + Familie als Motiv
+Ziel: Kleines Ja zum Schutz der Familie.` },
+      { front: `PREMIUM – „Die Zinsbindung läuft ja noch 3 Jahre.“ Wie drehe ich das?`, back: `»Perfekt, davon bin ich ausgegangen. Und genau deswegen rufe ich an: Je früher Sie Premium abschließen, desto länger läuft Ihr günstiger Zins. Ist es für Sie relevant, einfach mal zu schauen, wie viel Zeit wir noch haben?«
+
+Technik: Einwand-Drehung + Dringlichkeit
+Ziel: Warten wird zum Risiko, Handeln zur Pflicht.` },
+      { front: `PREMIUM – Großes Volumen: Wie biete ich zwei Optionen?`, back: `»Wir können 100.000 € mit 1,25 % aufsetzen – oder direkt 200.000 €, um noch mehr zu sichern. Was fühlt sich für Ihr Bauvorhaben stimmiger an?«
+
+Technik: Zwei Optionen + Upselling
+Ziel: Der Kunde wählt zwischen mehr und noch mehr – nie zwischen Ja und Nein.` },
+      { front: `PREMIUM – Langfristige Planung: Wie nutze ich „sicherlich“?`, back: `»Sie planen langfristig – sicherlich wollen Sie dabei keine Überraschungen bei den Zinsen, oder? Premium gibt Ihnen Planbarkeit über Jahre. Sie sind sicherlich offen für eine konkrete Rechnung?«
+
+Technik: „Sicherlich“ + Planbarkeit
+Ziel: Zustimmung ist der einfachste Weg.` },
+
+      // ===== TREND (61–75) =====
+      { front: `TREND – VL-Sparer: Wie starte ich mit offener Frage?`, back: `»Nicht: „Wollen Sie VL anlegen?“ – Sondern: „Was wäre für Sie der beste Weg, aus den 40 € VL/Monat echtes Vermögen zu machen?“ Und dann: „Wie stellen Sie sich Ihre finanzielle Zukunft in 10 Jahren vor?«
+
+Technik: Offene W-Fragen + Vision
+Ziel: Der Kunde denkt selbst – und kommt zu Trend.` },
+      { front: `TREND – Flexibel bleiben: Wie nutze ich Future Pacing?`, back: `»Stellen Sie sich vor: Die Zinsen steigen. Ihr Guthaben bei Trend wächst mit – bis zu 4 %. Während andere Sparer mit 0,1 % dastehen, verdienen Sie mit. Wie würde sich das anfühlen?«
+
+Technik: Future Pacing + Marktvergleich
+Ziel: Flexibilität wird zum Vorteil, nicht zur Unsicherheit.` },
+      { front: `TREND – Marktzins: Wie hole ich das Commitment?`, back: `»Wir sind uns einig, dass Flexibilität in unsicheren Zeiten wichtig ist. Glauben Sie, dass Sie diese 5 ‰ monatlich investieren können, um von steigenden Zinsen zu profitieren?«
+
+Technik: Commitment + Flexibilität
+Ziel: Kleines Ja zum flexiblen Vermögensaufbau.` },
+      { front: `TREND – Steigende Zinsen: Wie nutze ich Negativierung?`, back: `»Wenn wir Ihnen mit Trend ermöglichen könnten, von steigenden Zinsen zu profitieren – wäre es dann eine schlechte Idee, heute anzufangen?«
+
+Technik: Negativierung + Chancennutzen
+Ziel: Der Kunde sieht die Chance, nicht das Risiko.` },
+      { front: `TREND – Junge Leute: Wie nutze ich „sicherlich“?`, back: `»Sie wollen Vermögen aufbauen – sicherlich wollen Sie dabei nicht in starre Verträge gezwungen werden, oder? Trend passt sich an. Sie sind sicherlich offen dafür, wie das funktioniert?«
+
+Technik: „Sicherlich“ + Freiheit
+Ziel: Unabhängigkeit wird zum Verkaufsargument.` },
+      { front: `TREND – Staatliche Förderung: Wie drehe ich „Zu kompliziert“?`, back: `»Ah, Sie haben sich schon mit VL beschäftigt? Perfekt. Davon bin ich ausgegangen. Genau deswegen rufe ich an: Bei Trend ist WoP + VL integriert. Ist es für Sie relevant, einfach mal zu sehen, wie viel Förderung Ihnen zusteht?«
+
+Technik: Einwand-Drehung + Förderung
+Ziel: Komplexität wird zur Komplettlösung.` },
+      { front: `TREND – Generationenbonus: Wie biete ich zwei Optionen?`, back: `»Wir können den Generationenbonus für Ihre Kinder nutzen – oder für Ihre Enkel. Was fühlt sich für Ihre Familienplanung stimmiger an?«
+
+Technik: Zwei Optionen + Generationen
+Ziel: Familiäre Bindung wird zum Motivator.` },
+      { front: `TREND – Vermögensaufbau: Wie nutze ich den Pain-Point?`, back: `»Stellen Sie sich vor: Sie sind 35 und haben nichts angelegt. Ihre Freunde haben Häuser, Sie zahlen Miete. Mit Trend fangen Sie heute an – flexibel, aber konsequent. Wie würde sich das in 10 Jahren anfühlen?«
+
+Technik: Future Pacing (negativ) + sozialer Vergleich
+Ziel: Der Schmerz des Zurückbleibens wird spürbar.` },
+      { front: `TREND – Student mit VL: Wie baue ich Vertrauen auf?`, back: `»Herr Maier, ich bin kein Fan von typischen Verkaufsgesprächen. Wenn Trend für Sie als Student nicht passt, sage ich es. Wir suchen als Team eine Lösung – oder eben nicht. Was wäre für Sie der nächste sinnvolle Schritt?«
+
+Technik: Team-Ansatz + Ehrlichkeit
+Ziel: Vertriebsabwehr wird durchbrochen.` },
+      { front: `TREND – WoP möglich: Wie ermögliche ich Mitgestaltung?`, back: `»Meiner Meinung nach ist Trend mit VL hier perfekt. Aber bei der Sparrate bin ich mir noch unsicher. Was würde für Sie besser passen: 40 €/Monat oder eher 60 €, um schneller ans Ziel zu kommen?«
+
+Technik: Mitgestaltung + zwei Optionen
+Ziel: Der Kunde baut seine Lösung.` },
+      { front: `TREND – Anpassungsfähig: Wie nutze ich „Was wäre wenn“?`, back: `»Angenommen, die Zinsen steigen auf 3 % – wäre es dann eine schlechte Idee, bereits 0,20 % gesichert zu haben, die mitsteigen? Stellen Sie sich vor, wie Ihr Konto dann aussieht...«
+
+Technik: „Was wäre wenn“ + Negativierung
+Ziel: Der Kunde sieht die Zukunft – und will sie sichern.` },
+      { front: `TREND – Sicherheit trotz Flexibilität: Wie nutze ich Future Pacing?`, back: `»Stellen Sie sich vor: Der Markt bricht ein, die Zinsen fallen. Ihr Trend-Vertrag hat einen Mindestzins von 0,20 %. Sie sind geschützt. Wie fühlt sich diese Sicherheit an?«
+
+Technik: Future Pacing + Absicherung
+Ziel: Flexibilität wird zur Sicherheit.` },
+      { front: `TREND – Arbeitgeber zahlt VL: Wie hole ich das Commitment?`, back: `»Wir sind uns einig, dass Ihr Arbeitgeber 40 €/Monat zahlt. Glauben Sie, dass Sie zusätzlich 10 € investieren können, um daraus echtes Vermögen zu machen?«
+
+Technik: Commitment + geringe Hürde
+Ziel: Kleiner Betrag, große Wirkung.` },
+      { front: `TREND – „Ich will keine Langzeitbindung.“ Wie drehe ich das?`, back: `»Perfekt, davon bin ich ausgegangen. Genau deswegen rufe ich an: Trend hat keine starre Zinsbindung, sondern passt sich an. Ist es für Sie relevant, einfach mal zu sehen, wie Flexibilität funktioniert?«
+
+Technik: Einwand-Drehung + Flexibilität
+Ziel: Der Einwand wird zum Verkaufsargument.` },
+      { front: `TREND – Guthabenzins bis 4 %: Wie nutze ich Preis vs. Kosten?`, back: `»Meinen Sie den Preis von 5 ‰/Monat – oder die Kosten, wenn Sie in 10 Jahren ohne Zinsgewinne dastehen? Bei 4 % Guthabenzins sind das Tausende Euro, die Ihnen entgehen. Was fühlt sich stimmiger an?«
+
+Technik: Preis vs. Kosten + Zinseszins
+Ziel: Der monatliche Betrag wird vernachlässigbar.` },
+
+      // ===== SPEZIAL (76–90) =====
+      { front: `SPEZIAL – Großprojekt 250k+: Wie stelle ich die offene Frage?`, back: `»Nicht: „Wollen Sie finanzieren?“ – Sondern: „Was wäre für Sie der optimale Weg, ein 400.000 €-Projekt mit maximaler Planbarkeit zu finanzieren?“ Und dann: „Wie stellen Sie sich die Tilgung vor – eher aggressiv oder konservativ?«
+
+Technik: Offene W-Fragen + Vision
+Ziel: Der Investor malt sein Projekt – Spezial ist der Rahmen.` },
+      { front: `SPEZIAL – Mehrfamilienhaus: Wie nutze ich Future Pacing?`, back: `»Stellen Sie sich vor: Sie besitzen ein Mehrfamilienhaus mit 6 Wohnungen. Die Sanierung ist finanziert – zu 1,60 %, ohne Agio, mit flexibler Tilgung. Ihre Mieter zahlen die Modernisierung über die Miete. Wie fühlt sich das als Geschäftsmodell an?«
+
+Technik: Future Pacing + Geschäftsmodell
+Ziel: Die Finanzierung wird zum Investment-Tool.` },
+      { front: `SPEZIAL – Gewerbeobjekt: Wie nutze ich „sicherlich“?`, back: `»Sie wollen ein Gewerbeobjekt kaufen – sicherlich wollen Sie dabei die Kosten im Griff behalten, oder? Spezial bietet 1,60 % ohne Agio. Sie sind sicherlich offen für eine Investitionsrechnung?«
+
+Technik: „Sicherlich“ + Kontrolle
+Ziel: Der Geschäftsmann will Kontrolle – und bekommt sie.` },
+      { front: `SPEZIAL – Investor: Wie hole ich das Commitment?`, back: `»Wir sind uns einig, dass 1,60 % ohne Agio Ihre Rendite schützt. Glauben Sie, dass Sie die 5 ‰ monatlich investieren können, um dieses Projekt zu finanzieren?«
+
+Technik: Commitment + Renditeschutz
+Ziel: Kleines Ja zum großen Deal.` },
+      { front: `SPEZIAL – WEG: Wie nutze ich Negativierung?`, back: `»Wenn wir Ihrer WEG ermöglichen könnten, die Sanierung zu 1,60 % zu finanzieren – wäre es dann eine schlechte Idee, das der nächsten Eigentümerversammlung vorzuschlagen?«
+
+Technik: Negativierung + Entscheidungsvorlage
+Ziel: Der Verwalter hat das Argument für die Versammlung.` },
+      { front: `SPEZIAL – Kommune: Wie drehe ich „Zu teuer für den Haushalt“?`, back: `»Ah, Sie haben einen festen Haushalt – perfekt. Davon bin ich ausgegangen. Genau deswegen rufe ich an: Spezial ermöglicht flexible Tilgung 4,5–8 ‰. Ist es für Sie relevant, einfach mal zu schauen, wie wir das an Ihren Haushalt anpassen?«
+
+Technik: Einwand-Drehung + Flexibilität
+Ziel: Budget wird zum Planungsinstrument.` },
+      { front: `SPEZIAL – Flexible Tilgung: Wie biete ich zwei Optionen?`, back: `»Wir können mit 4,5 ‰ tilgen – das dauert länger, aber die Rate ist niedrig. Oder mit 8 ‰ – dann sind Sie in 6 Jahren schuldenfrei. Was passt Ihrer Cashflow-Planung besser?«
+
+Technik: Zwei Optionen + Cashflow-Bezug
+Ziel: Der Investor wählt seine Strategie.` },
+      { front: `SPEZIAL – Kein Agio: Wie baue ich Vertrauen auf?`, back: `»Herr Maier, bei Spezial gibt es kein Agio. Keine versteckten Kosten, keine Überraschungen. Wenn das nicht zu Ihrem Projekt passt, sage ich es. Wir suchen als Team die beste Lösung.«
+
+Technik: Team-Ansatz + Transparenz
+Ziel: Vertrauen durch Ehrlichkeit.` },
+      { front: `SPEZIAL – Planbarkeit: Wie nutze ich den Pain-Point?`, back: `»Stellen Sie sich vor: Sie starten ein 500.000 €-Projekt – und die Zinsen steigen während der Bauzeit. Mit Spezial sind 1,60 % fest. Ihre Planung bleibt stabil. Wie viel Sicherheit ist Ihnen das wert?«
+
+Technik: Future Pacing (negativ) + Planbarkeit
+Ziel: Die Zinssicherung wird zum Risikomanagement.` },
+      { front: `SPEZIAL – Sonderzahlungen: Wie ermögliche ich Mitgestaltung?`, back: `»Meiner Meinung nach ist Spezial hier perfekt. Aber bei der Tilgungsstrategie bin ich mir noch unsicher. Was wäre für Sie besser: Jährliche Sonderzahlungen oder monatlich höhere Raten? Was müssten wir anpassen?«
+
+Technik: Mitgestaltung + Strategie
+Ziel: Der Kunde baut seine Finanzierungsstrategie selbst.` },
+      { front: `SPEZIAL – Banken/Genossenschaften: Wie nutze ich „Was wäre wenn“?`, back: `»Angenommen, Ihre Genossenschaft könnte 1,60 % ohne Agio für das nächste Großprojekt sichern – wäre es dann eine schlechte Idee, das im Vorstand zu besprechen? Stellen Sie sich vor, wie das Protokoll aussehen würde...«
+
+Technik: „Was wäre wenn“ + Negativierung + Vision
+Ziel: Die Entscheidung wird zur Selbstverständlichkeit.` },
+      { front: `SPEZIAL – Marktgerechte Zeiten: Wie nutze ich Future Pacing?`, back: `»Stellen Sie sich vor: Ihr 800.000 €-Projekt läuft nach Plan. Die Zinsen sind bei 1,60 % fixiert, die Tilgung passt sich Ihrem Cashflow an. Keine Überraschungen, keine Verzögerungen. Wie fühlt sich diese Planbarkeit an?«
+
+Technik: Future Pacing + Planbarkeit
+Ziel: Die Zukunft wird berechenbar.` },
+      { front: `SPEZIAL – Hohe Summe sichern: Wie hole ich das Commitment?`, back: `»Wir sind uns einig, dass 1,60 % für 250.000 € unschlagbar sind. Glauben Sie, dass Sie die 5 ‰ monatlich investieren können, um dieses Volumen zu sichern?«
+
+Technik: Commitment + Volumen
+Ziel: Kleines Ja zum institutionellen Deal.` },
+      { front: `SPEZIAL – Gewerblicher Kauf: Wie drehe ich „Wir haben schon eine Hausbank“?`, back: `»Ah, Sie haben eine Hausbank – perfekt. Davon bin ich ausgegangen. Genau deswegen rufe ich an: Spezial ergänzt Ihre Hausbank, wir sind nicht Konkurrenz. Ist es für Sie relevant, einfach mal zu schauen, ob 1,60 % Ihren Konditionen entsprechen?«
+
+Technik: Einwand-Drehung + Komplement
+Ziel: Die Hausbank bleibt, Spezial wird zur Ergänzung.` },
+      { front: `SPEZIAL – Unternehmen: Wie nutze ich Preis vs. Kosten?`, back: `»Meinen Sie den Preis der Abschlussgebühr – oder die Kosten, wenn Sie in 5 Jahren zu 4 % refinanzieren müssen? Bei 1,60 % sind das Hunderttausende Euro, die Ihnen entgehen. Was fühlt sich für Ihre Bilanz stimmiger an?«
+
+Technik: Preis vs. Kosten + Bilanzbezug
+Ziel: Die Gebühr wird vernachlässigbar, die Ersparnis wird riesig.` },
+
+      // ===== CASH 3 & CASH 5 (91–100) =====
+      { front: `CASH 3 – Ratenzahlung: Wie starte ich mit offener Frage?`, back: `»Nicht: „Wollen Sie Cash 3?“ – Sondern: „Was wäre für Sie der beste Weg, Ihre Modernisierung in 3 Schritten zu finanzieren, ohne alles auf einmal zu bezahlen?“ Und dann: „Wie stellen Sie sich Ihr Haus in 5 Jahren vor, wenn schon Heizung und Fenster erledigt sind?«
+
+Technik: Offene W-Fragen + Vision
+Ziel: Der Kunde sieht den Plan – Cash 3 ist das Werkzeug.` },
+      { front: `CASH 3 – 3x Auszahlung: Wie nutze ich Future Pacing?`, back: `»Stellen Sie sich vor: In 3 Jahren bekommen Sie 10.000 € für die neue Heizung. In 6 Jahren weitere 10.000 € für die Fenster. In 9 Jahren das Bad. Alles mit festen Zinsen, alles geplant. Wie würde sich das anfühlen, nie mehr im Dunkeln zu tappen?«
+
+Technik: Future Pacing + Planbarkeit
+Ziel: Die Modernisierung wird zum Projektplan.` },
+      { front: `CASH 3 – Modernisierung planen: Wie hole ich das Commitment?`, back: `»Wir sind uns einig, dass Cash 3 Ihre Sanierung strukturiert. Glauben Sie, dass Sie 2 ‰ der BSS monatlich investieren können, um in 3 Jahren die erste Auszahlung zu erhalten?«
+
+Technik: Commitment + konkrete Planung
+Ziel: Kleines Ja zur strukturierten Modernisierung.` },
+      { front: `CASH 3 – VL einbinden: Wie nutze ich „sicherlich“?`, back: `»Sie bekommen VL – sicherlich wollen Sie diese nicht einfach verstreichen lassen, oder? Mit Cash 3 fließen sie direkt in Ihre Modernisierung. Sie sind sicherlich offen dafür, wie das funktioniert?«
+
+Technik: „Sicherlich“ + Nutzung
+Ziel: VL wird zum Modernisierungsmotor.` },
+      { front: `CASH 5 – Einmalzahlung: Wie nutze ich Negativierung?`, back: `»Wenn wir Ihnen mit Cash 5 ermöglichen könnten, aus einer einmaligen Einzahlung 5 Modernisierungsschritte über 15 Jahre zu finanzieren – wäre es dann eine schlechte Idee, sich das anzusehen?«
+
+Technik: Negativierung + Langzeitnutzen
+Ziel: Der Kunde sieht die Effizienz, nicht den Aufwand.` },
+      { front: `CASH 5 – 5x Auszahlung: Wie biete ich zwei Optionen?`, back: `»Wir können alle 3 Jahre 10.000 € auszahlen – oder alle 2 Jahre 7.500 €, je nach Ihrem Renovierungsplan. Was passt Ihrem Modernisierungsrhythmus besser?«
+
+Technik: Zwei Optionen + Rhythmus
+Ziel: Der Kunde wählt seinen Takt.` },
+      { front: `CASH 5 – 15 Jahre Planung: Wie drehe ich „Zu lange“?`, back: `»Ah, Sie denken kurzfristig – perfekt. Davon bin ich ausgegangen. Genau deswegen rufe ich an: Cash 5 bedeutet nicht, dass Sie warten müssen. Die erste Auszahlung kommt nach 3 Jahren. Ist es für Sie relevant, einfach mal zu sehen, wie das Ihren nächsten Renovierungsschritt finanziert?«
+
+Technik: Einwand-Drehung + Kurzfristigkeit
+Ziel: Langfristigkeit wird zur kurzfristigen Lösung.` },
+      { front: `CASH 5 – Keine weitere Einzahlung: Wie baue ich Vertrauen auf?`, back: `»Herr Maier, bei Cash 5 zahlen Sie einmal 12 % der BSS ein – und dann nie wieder. Keine monatliche Belastung, keine Überraschungen. Wenn das nicht zu Ihrem Plan passt, sage ich es. Wir suchen als Team die Lösung.«
+
+Technik: Team-Ansatz + Einfachheit
+Ziel: Die Einmaligkeit wird zur Beruhigung.` },
+      { front: `CASH – Modernisierungsvorsorge: Wie nutze ich den Pain-Point?`, back: `»Stellen Sie sich vor: Ihr Dach undicht, die Heizung kaputt – und Sie müssen alles auf einmal finanzieren. Mit Cash haben Sie das Geld in Raten geplant. Wie viel Stress würde das ersparen?«
+
+Technik: Future Pacing (negativ) + Stressvermeidung
+Ziel: Die Vorsorge wird zur Entspannung.` },
+      { front: `CASH – Förderung kombinieren: Wie nutze ich „Was fanden Sie am besten?“`, back: `»Was fanden Sie an der Idee, Modernisierung und Förderung zu kombinieren, wirklich am besten? Dass Sie 70 % BEG-Förderung bekommen – oder dass Cash den Rest zinsgünstig finanziert?«
+
+Technik: „Was fanden Sie am besten?“ + zwei positive Optionen
+Ziel: Der Kunde überzeugt sich selbst von der Idee.` },
+    ]
+  },
+      set18: {
+        title: "SET 18: Rechenfälle – Tarife & Cash-Modelle",
+        subtitle: "Reale Kundensituationen – Rechnung & Antwort auf der Rückseite",
+        cards: [
+          { front: `Anna (18), Azubine: möchte mit 150 € im Monat einfach ansparen, hat noch kein Bauvorhaben. Tarif: KOMPAKT · BSS 30.000 €. Frage: Wann ist sie zuteilungsreif?`, back: `Mindestsparguthaben (50 %): 30.000 € × 50 % = 15.000 €
+15.000 € ÷ 150 € = 100 Monate = 8 J. 4 M.` },
+          { front: `Max (21), Student: will in 5 Jahren zuteilungsreif sein und spart konsequent. Tarif: KOMPAKT · BSS 30.000 €. Frage: Welche Sparrate braucht er monatlich?`, back: `Mindestsparguthaben: 30.000 € × 50 % = 15.000 €
+15.000 € ÷ 60 Monate = 250 €/Monat
+(Regelsparbeitrag wären nur 150 €/Monat → Rate erhöhen)` },
+          { front: `Familie Klein (34/32): wollen in ein paar Jahren bauen und können 300 €/Monat sparen. Tarif: KOMPAKT · BSS 50.000 €. Frage: Wann sind sie zuteilungsreif?`, back: `Mindestsparguthaben: 50.000 € × 50 % = 25.000 €
+25.000 € ÷ 300 € = 83,3 Monate ≈ 6 J. 11 M.` },
+          { front: `Herr Becker (28), Handwerker: will sich ein finanzielles Polster für das erste Eigenheim aufbauen. Tarif: KOMPAKT · BSS 40.000 €. Frage: Regelsparbeitrag, Zuteilungszeit, Darlehen und Jahreszinsen?`, back: `Regelsparbeitrag: 40.000 € × 5 ‰ = 200 €/Monat
+Zuteilung: 20.000 € ÷ 200 € = 100 Monate = 8 J. 4 M.
+Darlehen: 40.000 € − 20.000 € = 20.000 €
+Zinsen: 20.000 € × 1,75 % = 350 €/Jahr` },
+          { front: `Lisa (17), Schülerin: spart monatlich 100 € aus Taschengeld und Nebenjob. Tarif: KOMPAKT · BSS 20.000 €. Frage: Wann ist sie zuteilungsreif?`, back: `Mindestsparguthaben: 20.000 € × 50 % = 10.000 €
+10.000 € ÷ 100 € = 100 Monate = 8 J. 4 M.` },
+          { front: `Frau Braun (50): möchte den maximalen Rahmen nutzen und kräftig sparen. Tarif: KOMPAKT · BSS 60.000 €. Frage: Wie hoch sind Regelsparbeitrag und Abschlussgebühr?`, back: `Regelsparbeitrag: 60.000 € × 5 ‰ = 300 €/Monat
+Abschlussgebühr: 60.000 € × 1 % = 600 €` },
+          { front: `Herr Weber (33): fängt regelmäßig an zu sparen, möchte die Vertragskosten kennen. Tarif: KOMPAKT · BSS 45.000 €. Frage: Wie hoch ist die Abschlussgebühr?`, back: `45.000 € × 1 % = 450 €` },
+          { front: `Familie Roth (40/38): haben das Mindestsparguthaben erreicht und wollen nun das Darlehen nutzen. Tarif: KOMPAKT · BSS 40.000 €. Frage: Wie hoch ist das Bauspardarlehen?`, back: `Bauspardarlehen = BSS − angespartes Guthaben
+40.000 € − 20.000 € = 20.000 €` },
+          { front: `Herr Vogel (26): das Darlehen wird ausgezahlt, er will die Zinsbelastung kennen. Tarif: KOMPAKT · Darlehen 20.000 €. Frage: Wie hoch sind die Jahreszinsen?`, back: `20.000 € × 1,75 % = 350 €/Jahr (29,17 €/Monat)` },
+          { front: `Frau Schuster (44): startet in die Darlehensphase. Tarif: KOMPAKT · BSS 50.000 €. Frage: Wie hoch ist die monatliche Rate?`, back: `50.000 € × 5 ‰ = 250 €/Monat` },
+          { front: `Tom (19), Auszubildender: kann sich 150 €/Monat leisten. Tarif: KOMPAKT · BSS 30.000 €. Frage: Entspricht diese Rate dem Regelsparbeitrag?`, back: `Ja: 30.000 € × 5 ‰ = 150 €/Monat
+Der Regelsparbeitrag ist damit exakt eingehalten.` },
+          { front: `Familie Sommer (36/34): sparen monatlich 250 € für die spätere Modernisierung. Tarif: KOMPAKT · BSS 40.000 €. Frage: Wann sind sie zuteilungsreif?`, back: `Mindestsparguthaben: 20.000 €
+20.000 € ÷ 250 € = 80 Monate = 6 J. 8 M.` },
+          { front: `Herr Franke (45): die Darlehensauszahlung steht an. Tarif: KOMPAKT · Darlehen 25.000 €. Frage: Wie hoch ist das Agio?`, back: `25.000 € × 2 % = 500 € (einmalig, bei Auszahlung)` },
+          { front: `Sabine (24): erste eigene Wohnung, möchte mit einem kleinen Vertrag starten. Tarif: KOMPAKT · BSS 35.000 €. Frage: Abschlussgebühr und Regelsparbeitrag?`, back: `Abschlussgebühr: 35.000 € × 1 % = 350 €
+Regelsparbeitrag: 35.000 € × 5 ‰ = 175 €/Monat` },
+          { front: `Herr Krüger (31): nimmt das Darlehen in Anspruch, will die monatliche Zinslast wissen. Tarif: KOMPAKT · Darlehen 30.000 €. Frage: Zinsen pro Monat?`, back: `30.000 € × 1,75 % = 525 €/Jahr
+525 € ÷ 12 = 43,75 €/Monat` },
+          { front: `Familie Albrecht (48/46): die Darlehensphase beginnt. Tarif: KOMPAKT · BSS 55.000 €. Frage: Wie hoch ist die monatliche Rate?`, back: `55.000 € × 5 ‰ = 275 €/Monat` },
+          { front: `Frau Lindner (52): die erste Rate in der Darlehensphase steht an. Tarif: KOMPAKT · BSS 40.000 €, Darlehen 20.000 €, Rate 200 €/Monat. Frage: Wie teilt sich die 1. Rate auf?`, back: `Zinsanteil: 20.000 € × 1,75 % ÷ 12 = 29,17 €
+Tilgungsanteil: 200 € − 29,17 € = 170,83 €
+→ Der Zinsanteil sinkt mit jedem Monat.` },
+          { front: `Herr Bauer (60): löst seine Anschlussfinanzierung mit dem Bauspardarlehen ab. Tarif: KOMPAKT · Darlehen 20.000 €, Rate 200 €/Monat. Frage: Tilgungsdauer und Zinskosten?`, back: `Annuität: ≈ 108 Monate = 9 J. 0 M.
+Gesamt gezahlt: 200 € × 108 ≈ 21.640 €
+→ Zinskosten: ≈ 1.640 € (max. Tilgungsdauer 9 J. 5 M.)` },
+          { front: `Frau König (38): startet überschaubar. Tarif: KOMPAKT · BSS 25.000 €. Frage: Wie hoch ist der Regelsparbeitrag?`, back: `25.000 € × 5 ‰ = 125 €/Monat` },
+          { front: `Familie Hartmann (42/40): sparen den Regelbeitrag bei maximaler Summe. Tarif: KOMPAKT · BSS 60.000 €, Sparrate 300 €/Monat. Frage: Wann zuteilungsreif?`, back: `Mindestsparguthaben: 30.000 €
+30.000 € ÷ 300 € = 100 Monate = 8 J. 4 M.` },
+          { front: `Frau Müller (57): Wasserschaden im Keller – das Haus muss komplett modernisiert werden, Kosten ca. 60.000 €. Tarif: KOMFORT (Modernisierung) · BSS 60.000 €. Frage: Wie hoch ist die monatliche Rate in der Darlehensphase?`, back: `60.000 € × 10 ‰ = 600 €/Monat
+(Sollzins 0,45 %, Tilgungsdauer max. 5 J. 3 M.)` },
+          { front: `Herr Wagner (61), Rentner: möchte bei der Sanierung eine möglichst niedrige Belastung. Tarif: KOMFORT (Niedrige Rate) · BSS 50.000 €. Frage: Wie hoch ist der Regelsparbeitrag?`, back: `50.000 € × 3 ‰ = 150 €/Monat` },
+          { front: `Familie Berg (39/37): Dach und Heizung sanieren, sie sparen kräftig. Tarif: KOMFORT (Modernisierung) · BSS 50.000 €. Frage: Regelsparbeitrag und Zuteilungszeit?`, back: `Regelsparbeitrag: 50.000 € × 6 ‰ = 300 €/Monat
+Zuteilung: 20.000 € ÷ 300 € = 66,7 Monate ≈ 5 J. 7 M.` },
+          { front: `Frau Schmitt (55): will das Haus altersgerecht umbauen und spart an. Tarif: KOMFORT · BSS 45.000 €. Frage: Wie hoch ist das Mindestsparguthaben?`, back: `45.000 € × 40 % = 18.000 €` },
+          { front: `Herr Lehmann (63): Badezimmer barrierefrei, nimmt das Darlehen in Anspruch. Tarif: KOMFORT (Niedrige Rate) · Darlehen 25.000 €. Frage: Jahreszinsen?`, back: `25.000 € × 1,95 % = 487,50 €/Jahr (40,63 €/Monat)` },
+          { front: `Familie Neumann (46/44): Fenster und Fassade modernisieren. Tarif: KOMFORT (Modernisierung) · Darlehen 25.000 €. Frage: Jahreszinsen?`, back: `25.000 € × 0,45 % = 112,50 €/Jahr (9,38 €/Monat)` },
+          { front: `Herr Schäfer (58): weiß noch nicht, wie hoch seine Rate sein darf. Tarif: KOMFORT · BSS 60.000 €. Frage: Wie hoch ist die Monatsrate in beiden Varianten?`, back: `Modernisierung: 60.000 € × 10 ‰ = 600 €/Monat
+Niedrige Rate: 60.000 € × 3,5 ‰ = 210 €/Monat` },
+          { front: `Frau Wolf (49): Photovoltaik und Dämmung, möchte schnell schuldenfrei sein. Tarif: KOMFORT (Modernisierung) · BSS 40.000 €. Frage: Wie hoch ist die monatliche Rate?`, back: `40.000 € × 10 ‰ = 400 €/Monat` },
+          { front: `Familie Keller (41/39): Küche und Bad erneuern, bevorzugen eine kleine Rate. Tarif: KOMFORT (Niedrige Rate) · BSS 40.000 €. Frage: Wie hoch ist die monatliche Rate?`, back: `40.000 € × 3,5 ‰ = 140 €/Monat` },
+          { front: `Herr Brandt (67): hat sein Haus verkauft und muss die neue Wohnung modernisieren. Tarif: KOMFORT · BSS 40.000 €. Frage: Abschlussgebühr und Variantenpreis zusammen?`, back: `Abschlussgebühr: 40.000 € × 1 % = 400 €
+Variantenpreis: 40.000 € × 0,6 % = 240 €
+→ 640 € (Agio kommt in der Darlehensphase dazu)` },
+          { front: `Frau Sommerfeld (51): Badezimmer-Umbau, möchte lange bei kleiner Rate tilgen. Tarif: KOMFORT (Niedrige Rate) · Darlehen 20.000 €, Rate 175 €/Monat. Frage: Tilgungsdauer und Zinskosten?`, back: `Annuität: ≈ 127 Monate = 10 J. 7 M.
+Gesamt gezahlt: 175 € × 126,5 ≈ 22.140 €
+→ Zinskosten: ≈ 2.140 €` },
+          { front: `Familie Stein (43/41): Dachsanierung, möchten möglichst schnell fertig sein. Tarif: KOMFORT (Modernisierung) · Darlehen 20.000 €, Rate 500 €/Monat. Frage: Tilgungsdauer und Zinskosten?`, back: `Annuität: ≈ 40 Monate = 3 J. 4 M.
+Gesamt gezahlt: 500 € × 40 ≈ 20.155 €
+→ Zinskosten: ≈ 155 €` },
+          { front: `Herr Fuchs (35): baut eine Einliegerwohnung aus. Tarif: KOMFORT (Modernisierung) · Darlehen 30.000 €. Frage: Jahreszinsen?`, back: `30.000 € × 0,45 % = 135 €/Jahr` },
+          { front: `Frau Dorn (59): Sanierung geplant, sie überlegt, welche Sparrate realistisch ist. Tarif: KOMFORT · BSS 45.000 €. Frage: Wie unterscheiden sich die Regelsparbeiträge beider Varianten?`, back: `Niedrige Rate: 45.000 € × 3 ‰ = 135 €/Monat
+Modernisierung: 45.000 € × 6 ‰ = 270 €/Monat
+→ Unterschied: 135 €/Monat` },
+          { front: `Herr Ahrens (44): vergleicht beide Darlehensvarianten. Tarif: KOMFORT · BSS 50.000 €. Frage: Wie hoch ist die Monatsrate in der Darlehensphase beider Varianten?`, back: `Niedrige Rate: 50.000 € × 3,5 ‰ = 175 €/Monat
+Modernisierung: 50.000 € × 10 ‰ = 500 €/Monat` },
+          { front: `Familie Ott (38/36): Wärmepumpe und Solar, sparen regelmäßig. Tarif: KOMFORT (Modernisierung) · BSS 60.000 €. Frage: Regelsparbeitrag und Zuteilungszeit?`, back: `Regelsparbeitrag: 60.000 € × 6 ‰ = 360 €/Monat
+Zuteilung: 24.000 € ÷ 360 € = 66,7 Monate ≈ 5 J. 7 M.` },
+          { front: `Herr Jung (52): möchte eine möglichst geringe monatliche Belastung. Tarif: KOMFORT (Niedrige Rate) · BSS 50.000 €. Frage: Regelsparbeitrag und Zuteilungszeit?`, back: `Regelsparbeitrag: 50.000 € × 3 ‰ = 150 €/Monat
+Zuteilung: 20.000 € ÷ 150 € = 133,3 Monate ≈ 11 J. 1 M.` },
+          { front: `Frau Peters (48): braucht 30.000 € für die Modernisierung, möchte ihr Haus aber nicht belasten. Tarif: KOMFORT. Frage: Was bedeutet das für sie konkret?`, back: `Blankodarlehen bis 75.000 € möglich
+→ kein Grundbucheintrag, kein Notar, kein Grundbuchamt` },
+          { front: `Familie Kaiser (35/33): bauen ein Einfamilienhaus und sparen mit dem Regelbeitrag. Tarif: PREMIUM · BSS 120.000 €. Frage: Regelsparbeitrag und Zuteilungszeit?`, back: `Regelsparbeitrag: 120.000 € × 5 ‰ = 600 €/Monat
+Zuteilung: 48.000 € ÷ 600 € = 80 Monate = 6 J. 8 M.` },
+          { front: `Herr König (42): große Finanzierung über 150.000 € Bausparsumme. Tarif: PREMIUM · BSS 150.000 €. Frage: Welcher Sollzins und welches Agio gelten?`, back: `Sollzins: 1,25 % (ab 100.000 € BSS)
+Agio: 0 % → keines` },
+          { front: `Frau Dr. Weber (50): kauft eine Eigentumswohnung mit Summe unter 100.000 €. Tarif: PREMIUM · BSS 80.000 €. Frage: Welcher Sollzins und welches Agio gelten?`, back: `Sollzins: 1,50 % (unter 100.000 € BSS)
+Agio: 0 % → keines` },
+          { front: `Familie Lang (40/38): Zuteilung erreicht, Darlehen von 60.000 € wird genutzt. Tarif: PREMIUM · BSS 100.000 €. Frage: Jahreszinsen?`, back: `60.000 € × 1,25 % = 750 €/Jahr (62,50 €/Monat)` },
+          { front: `Herr Rabe (30), Selbstständiger: hohe Summe, möchte die Rate flexibel wählen. Tarif: PREMIUM · BSS 150.000 €. Frage: Zwischen welchen Werten kann die Monatsrate liegen?`, back: `Niedrigste Wahl: 150.000 € × 4 ‰ = 600 €/Monat
+Höchste Wahl: 150.000 € × 8 ‰ = 1.200 €/Monat` },
+          { front: `Frau Stein (47): Modernisierung geplant, spart an. Tarif: PREMIUM · BSS 120.000 €. Frage: Wie hoch ist das Mindestsparguthaben?`, back: `120.000 € × 40 % = 48.000 €` },
+          { front: `Familie Vogel (44/42): Finanzierung über 200.000 €, vergleichen mit dem Bankangebot. Tarif: PREMIUM · BSS 200.000 €, Bankzins 4 %. Frage: Wie viel sparen sie pro Jahr?`, back: `PREMIUM: 200.000 € × 1,25 % = 2.500 €/Jahr
+Bank: 200.000 € × 4,00 % = 8.000 €/Jahr
+→ Ersparnis: 5.500 €/Jahr` },
+          { front: `Herr Brandt (62): plant seine Altersvorsorge mit staatlicher Förderung. Tarif: PREMIUM (Wohn-Riester) · BSS 150.000 €. Frage: Abschlussgebühr, Variantenpreis und Kontogebühr?`, back: `Abschlussgebühr: 150.000 € × 1 % = 1.500 €
+Variantenpreis: 150.000 € × 0,6 % = 900 €
+Kontogebühr: 20 €/Jahr (Sparphase, Riester)
+→ kein Agio` },
+          { front: `Frau König (50): möchte die Riester-Förderung optimal nutzen. Tarif: PREMIUM (Wohn-Riester) · BSS 100.000 €. Frage: Abschlussgebühr und Variantenpreis pro Jahr, auf 5 Jahre verteilt?`, back: `Abschlussgebühr: 100.000 € × 1 % = 1.000 € → 200 €/Jahr
+Variantenpreis: 100.000 € × 0,5 % = 500 € → 100 €/Jahr` },
+          { front: `Herr Wolf (36): die erste Rate der Darlehensphase steht an. Tarif: PREMIUM · BSS 100.000 €, Darlehen 60.000 €, Rate 500 €/Monat. Frage: Wie teilt sich die 1. Rate auf?`, back: `Zinsanteil: 60.000 € × 1,25 % ÷ 12 = 62,50 €
+Tilgungsanteil: 500 € − 62,50 € = 437,50 €` },
+          { front: `Familie Becker (39/37): tilgen 60.000 € Darlehen mit 500 €/Monat. Tarif: PREMIUM. Frage: Tilgungsdauer und Zinskosten?`, back: `Annuität: ≈ 128 Monate = 10 J. 8 M.
+Gesamt gezahlt: 500 € × 128,3 ≈ 64.130 €
+→ Zinskosten: ≈ 4.130 €` },
+          { front: `Frau Richter (45): Anschlussfinanzierung, Darlehen 40.000 €. Tarif: PREMIUM · BSS 100.000 €. Frage: Jahreszinsen?`, back: `40.000 € × 1,25 % = 500 €/Jahr` },
+          { front: `Herr Meier (34): kauft eine Wohnung für 80.000 €, Darlehen 50.000 €. Tarif: PREMIUM. Frage: Jahreszinsen?`, back: `50.000 € × 1,50 % = 750 €/Jahr` },
+          { front: `Familie Ebert (33/31): erster Immobilienkauf, sparen mit dem Regelbeitrag. Tarif: PREMIUM · BSS 100.000 €. Frage: Regelsparbeitrag und Zuteilungszeit?`, back: `Regelsparbeitrag: 100.000 € × 5 ‰ = 500 €/Monat
+Zuteilung: 40.000 € ÷ 500 € = 80 Monate = 6 J. 8 M.` },
+          { front: `Kevin (22): bekommt vermögenswirksame Leistungen vom Arbeitgeber und spart an. Tarif: TREND · BSS 25.000 €. Frage: Regelsparbeitrag und Zuteilungszeit?`, back: `Regelsparbeitrag: 25.000 € × 5 ‰ = 125 €/Monat
+Zuteilung: 10.000 € ÷ 125 € = 80 Monate = 6 J. 8 M.` },
+          { front: `Laura (23), Studentin: spart 150 €/Monat und möchte flexibel bleiben. Tarif: TREND · BSS 40.000 €. Frage: Wann ist sie zuteilungsreif?`, back: `Mindestsparguthaben: 40.000 € × 40 % = 16.000 €
+16.000 € ÷ 150 € = 106,7 Monate ≈ 8 J. 11 M.` },
+          { front: `Jan (20), Student: bekommt 40 € VL und zahlt selbst etwas dazu. Tarif: TREND · BSS 30.000 €. Frage: Wie hoch ist der Regelsparbeitrag?`, back: `30.000 € × 5 ‰ = 150 €/Monat` },
+          { front: `Herr Sommer (29): sein Guthaben wächst und das Zinsniveau ist günstig. Tarif: TREND · Guthaben 12.000 €, aktueller Guthabenzins 3,0 %. Frage: Jahreszinsen?`, back: `12.000 € × 3,0 % = 360 €/Jahr (30 €/Monat)` },
+          { front: `Frau März (27): schaut genau auf die Guthabenverzinsung. Tarif: TREND · Guthaben 10.000 €, aktueller Guthabenzins 1,5 %. Frage: Jahreszinsen?`, back: `10.000 € × 1,5 % = 150 €/Jahr` },
+          { front: `Familie Nord (35/33): Darlehensphase bei aktuell steigenden Zinsen. Tarif: TREND · Darlehen 20.000 €, aktueller Darlehenszins 3,5 %. Frage: Jahreszinsen?`, back: `20.000 € × 3,5 % = 700 €/Jahr (58,33 €/Monat)` },
+          { front: `Herr Feld (41): will das ungünstigste Szenario kennen. Tarif: TREND · Darlehen 20.000 €, Darlehenszins am Maximum. Frage: Jahreszinsen?`, back: `Darlehenszins-Maximum: 6,49 %
+20.000 € × 6,49 % = 1.298 €/Jahr (108,17 €/Monat)` },
+          { front: `Lea (19): vergleicht die Guthabenverzinsung mit dem Einstiegstarif. Tarif: TREND vs. KOMPAKT · Guthaben 10.000 €. Frage: Maximaler Zinsunterschied pro Jahr?`, back: `TREND (max. 4,0 %): 400 €
+KOMPAKT (0,2 %): 20 €
+→ bis zu 380 € mehr Ertrag pro Jahr` },
+          { front: `Frau Dr. Wagner (52): besitzt ein Mehrfamilienhaus, plant eine große Summe. Tarif: SPEZIAL · BSS 250.000 €. Frage: Regelsparbeitrag und Zuteilungszeit?`, back: `Regelsparbeitrag: 250.000 € × 5 ‰ = 1.250 €/Monat
+Zuteilung: 100.000 € ÷ 1.250 € = 80 Monate = 6 J. 8 M.
+(Mindestsparzeit 36 Monate erfüllt)` },
+          { front: `Herr Fischer (48): will ein Gewerbeobjekt modernisieren und die Tilgung frei wählen. Tarif: SPEZIAL · BSS 300.000 €. Frage: Monatsrate und Tilgungsdauer bei niedriger bzw. hoher Tilgung?`, back: `Niedrige Tilgung: 300.000 € × 4,5 ‰ = 1.350 €/Monat → 12 J. 5 M.
+Hohe Tilgung: 300.000 € × 8 ‰ = 2.400 €/Monat → 6 J. 9 M.` },
+          { front: `Familie Gruber (45/43): Vermögensverwaltung, hohe Bausparsumme. Tarif: SPEZIAL · BSS 250.000 €. Frage: Wie hoch ist das Mindestsparguthaben?`, back: `250.000 € × 40 % = 100.000 €` },
+          { front: `Herr Stahl (50), Investor: nutzt das Darlehen von 180.000 €. Tarif: SPEZIAL · BSS 300.000 €. Frage: Jahreszinsen?`, back: `180.000 € × 1,60 % = 2.880 €/Jahr (240 €/Monat)` },
+          { front: `Frau Esser (54): besitzt eine Wohnanlage mit 6 Einheiten, die saniert werden muss. Tarif: SPEZIAL · BSS 250.000 €. Frage: Abschlussgebühr und Variantenpreis zusammen?`, back: `Abschlussgebühr: 250.000 € × 1 % = 2.500 €
+Variantenpreis: 250.000 € × 0,6 % = 1.500 €
+→ 4.000 €, kein Agio` },
+          { front: `Herr Funk (43), Unternehmer: spart 2.000 €/Monat für ein großes Projekt. Tarif: SPEZIAL · BSS 300.000 €. Frage: Wann ist er zuteilungsreif?`, back: `Mindestsparguthaben: 120.000 €
+120.000 € ÷ 2.000 € = 60 Monate = 5 Jahre` },
+          { front: `Familie Wald (49/47): fragen nach der Verzinsung ihres Guthabens von 100.000 €. Tarif: SPEZIAL. Frage: Jahreszinsen?`, back: `100.000 € × 0,01 % = 10 €/Jahr
+(Guthabenzins minimal – Vorteil liegt im Darlehenszins 1,60 %)` },
+          { front: `Herr Platte (46): spart mit dem Regelbeitrag exakt durch die Mindestsparzeit. Tarif: SPEZIAL. Frage: Wie viel hat er in dieser Zeit angespart?`, back: `Regelsparbeitrag: 1.250 €/Monat
+1.250 € × 36 Monate = 45.000 €` },
+          { front: `Frau Weber (55): möchte ihre Modernisierung in drei Schritten finanzieren. Tarif: CASH 3 · BSS 30.000 €. Frage: Mindestsparrate und Auszahlungsplan?`, back: `Mindestsparrate: 30.000 € × 2 ‰ = 60 €/Monat
+Auszahlungen: 3 × 10.000 €` },
+          { front: `Familie Herz (47/45): Küche, Bad und Heizung nacheinander erneuern, sparen 150 €/Monat. Tarif: CASH 3 · BSS 45.000 €. Frage: Mindestsparrate und Auszahlungen?`, back: `Mindestsparrate: 45.000 € × 2 ‰ = 90 €/Monat
+Auszahlungen: 3 × 15.000 €` },
+          { front: `Herr Sand (58): schrittweise Sanierung ohne große Einmalzahlung. Tarif: CASH 3 · BSS 50.000 €. Frage: Mindestsparrate und Auszahlungsplan?`, back: `Mindestsparrate: 50.000 € × 2 ‰ = 100 €/Monat
+Auszahlungen: 3 × 16.667 €` },
+          { front: `Frau Korn (51): spart 150 €/Monat an, um Rücklagen aufzubauen. Tarif: CASH 3 · BSS 60.000 €. Frage: Guthaben nach 5 Jahren?`, back: `150 € × 60 Monate = 9.000 €
+(zzgl. Guthabenzins + evtl. VL/WoP)` },
+          { front: `Familie Wiese (49/47): sparen 200 €/Monat und planen die erste Auszahlung. Tarif: CASH 3 · BSS 45.000 €. Frage: Wann fließt die 1. Auszahlung (15.000 €)?`, back: `15.000 € ÷ 200 € = 75 Monate = 6 J. 3 M.` },
+          { front: `Herr Vogel (53): möchte eine großzügige Modernisierungsreserve. Tarif: CASH 3 · BSS 60.000 €. Frage: Mindestsparrate und Auszahlungsplan?`, back: `Mindestsparrate: 60.000 € × 2 ‰ = 120 €/Monat
+Auszahlungen: 3 × 20.000 €` },
+          { front: `Frau Engel (59): möchte einmal einzahlen und mehrmals nutzen. Tarif: CASH 5 · BSS 50.000 €. Frage: Einmalzahlung und Auszahlungsplan?`, back: `Einmalzahlung: 50.000 € × 12 % = 6.000 €
+Auszahlungen: 5 × 10.000 € über 15 Jahre` },
+          { front: `Familie Tau (50/48): langfristiger Modernisierungsfahrplan über Jahre. Tarif: CASH 5 · BSS 100.000 €. Frage: Einmalzahlung und Auszahlungen?`, back: `Einmalzahlung: 100.000 € × 12 % = 12.000 €
+Auszahlungen: 5 × ca. 10.000 € (alle 3 Jahre)` },
+          { front: `Herr Nacht (62): kleine Summe, einmalig anlegen. Tarif: CASH 5 · BSS 40.000 €. Frage: Einmalzahlung und Auszahlungsplan?`, back: `Einmalzahlung: 40.000 € × 12 % = 4.800 €
+Auszahlungen: 5 × 8.000 € über 15 Jahre` },
+          { front: `Frau Tag (57): großes Modernisierungsbudget über mehrere Projekte. Tarif: CASH 5 · BSS 120.000 €. Frage: Einmalzahlung und Auszahlungsplan?`, back: `Einmalzahlung: 120.000 € × 12 % = 14.400 €
+Auszahlungen: 5 × 24.000 € über 15 Jahre` },
+          { front: `Familie Stern (54/52): Dachfenster und Terrasse geplant. Tarif: CASH 5 · BSS 75.000 €. Frage: Wie hoch ist die Einmalzahlung?`, back: `75.000 € × 12 % = 9.000 € (einmalig, innerhalb 12 Monaten)` },
+          { front: `Herr Blatt (60): möchte wissen, wann es mit den Auszahlungen losgeht. Tarif: CASH 5 · BSS 60.000 €. Frage: Einmalzahlung und Zeitpunkt der 1. Auszahlung?`, back: `Einmalzahlung: 60.000 € × 12 % = 7.200 €
+1. Auszahlung nach 3 Jahren, danach alle 3 Jahre` },
+          { front: `Familie Kern (46/44): entscheiden zwischen den beiden Cash-Modellen. Tarif: CASH 3 vs. CASH 5 · BSS 60.000 €. Frage: Wie viel zahlt der Kunde insgesamt ein?`, back: `CASH 5: 60.000 € × 12 % = 7.200 € einmalig
+CASH 3: 120 €/Monat → über 9 Jahre = 12.960 €
+→ CASH 5 bindet deutlich weniger Kapital` },
+          { front: `Frau Linde (48): Anschlussfinanzierung über 100.000 €, vergleicht mit dem flexiblen Marktzins. Tarif: PREMIUM vs. TREND. Frage: Ersparnis pro Jahr?`, back: `PREMIUM (1,25 %): 1.250 €/Jahr
+TREND-Minimum (2,69 %): 2.690 €/Jahr
+→ Ersparnis: 1.440 €/Jahr = 120 €/Monat` },
+          { front: `Herr Damm (40): Großfinanzierung über 300.000 €, Bankangebot mit 4 %. Tarif: SPEZIAL. Frage: Ersparnis pro Jahr?`, back: `SPEZIAL (1,60 %): 4.800 €/Jahr
+Bank (4,00 %): 12.000 €/Jahr
+→ Ersparnis: 7.200 €/Jahr = 600 €/Monat` },
+          { front: `Familie Pohl (37/35): Darlehen über 40.000 €, vergleicht drei Tarife. Frage: Jahreszinsen?`, back: `KOMPAKT (1,75 %): 700 €
+KOMFORT-NR (1,95 %): 780 €
+PREMIUM (1,25 %): 500 €
+→ PREMIUM spart 280 €/Jahr ggü. KOMFORT-NR` },
+          { front: `Frau Wolke (49): möchte die Einmalkosten ihres Vertrags kennen. Tarif: KOMPAKT · BSS 40.000 €, Darlehen 20.000 €. Frage: Abschlussgebühr und Agio zusammen?`, back: `Abschlussgebühr: 40.000 € × 1 % = 400 €
+Agio: 20.000 € × 2 % = 400 €
+→ 800 €` },
+          { front: `Herr Gesell (30): plant seinen Vertrag komplett über alle Phasen. Tarif: KOMPAKT · BSS 50.000 €. Frage: Rate, Zuteilungszeit, Darlehen und Jahreszinsen?`, back: `Rate: 50.000 € × 5 ‰ = 250 €/Monat
+Zuteilung: 25.000 € ÷ 250 € = 100 Monate = 8 J. 4 M.
+Darlehen: 25.000 €
+Zinsen: 25.000 € × 1,75 % = 437,50 €/Jahr` },
+          { front: `Familie Kern (40/38): kaufen ein Haus für 400.000 €. Frage: Was spart das Wohnsparen gegenüber der reinen Finanzierung?`, back: `Ohne Wohnsparen: 697.278 € Gesamtkosten
+Mit Wohnsparen: 480.036 €
+→ Ersparnis: 217.242 €` },
+          { front: `Frau Rentnerin (67): lebt mietfrei im eigenen Haus. Frage: Wie viel spart sie monatlich an Miete („Steinerne Zusatzrente“)?`, back: `669 €/Monat
+= 35 % der gesetzlichen Rente` },
+          { front: `Herr Alt (59): ist Mieter, sein Nachbar im gleichen Haus ist Eigentümer – gleiches Einkommen. Frage: Wie groß ist der Vermögensunterschied?`, back: `Eigentümer: 166.000 € Gesamtvermögen
+Mieter: 30.000 €
+→ mehr als das Fünffache` },
+          { front: `Familie Neu (36/34): möchten den günstigsten Sollzins für ihre Finanzierung. Frage: Vergleich KOMPAKT / PREMIUM / SPEZIAL?`, back: `KOMPAKT: 1,75 %
+PREMIUM: 1,50 % (unter 100k) / 1,25 % (ab 100k)
+SPEZIAL: 1,60 %
+→ günstigster: PREMIUM ab 100.000 € BSS` },
+          { front: `Frau Sorge (56): möchte beim Einstiegstarif eine Bausparsumme von 80.000 €. Tarif: KOMPAKT. Frage: Ist das möglich?`, back: `Nein – KOMPAKT ist auf 60.000 € begrenzt
+Alternative: KOMFORT, PREMIUM oder TREND` },
+          { front: `Herr Zins (35): vergleicht alle Tarife bei derselben Bausparsumme. Frage: Wie hoch ist die Monatsrate in der Darlehensphase bei BSS 100.000 €?`, back: `KOMPAKT: 500 €
+KOMFORT-NR: 350 € | Modernisierung: 1.000 €
+PREMIUM: 400–800 €
+TREND: 500 €
+SPEZIAL: 450–800 €
+→ niedrigste: KOMFORT-NR (350 €)` },
+          { front: `Frau Sommer (42): Sanierung geplant, spart an. Tarif: KOMFORT · BSS 60.000 €. Frage: Wie hoch ist das Mindestsparguthaben?`, back: `60.000 € × 40 % = 24.000 €` },
+          { front: `Herr Winter (55): strebt die Zuteilung in 5 Jahren an. Tarif: PREMIUM · BSS 100.000 €. Frage: Welche Sparrate benötigt er?`, back: `Mindestsparguthaben: 40.000 €
+40.000 € ÷ 60 Monate = 667 €/Monat` },
+          { front: `Familie Blau (31/29): sparen langsam und stetig, 150 €/Monat. Tarif: KOMPAKT · BSS 45.000 €. Frage: Wann sind sie zuteilungsreif?`, back: `Mindestsparguthaben: 22.500 €
+22.500 € ÷ 150 € = 150 Monate = 12 J. 6 M.` },
+          { front: `Herr Grüner (37): Darlehensphase beim flexiblen Tarif, günstigster Fall. Tarif: TREND · Darlehen 18.000 €. Frage: Jahreszinsen?`, back: `Darlehenszins-Minimum: 2,69 %
+18.000 € × 2,69 % = 484,20 €/Jahr (40,35 €/Monat)` },
+          { front: `Frau Rot (46): große Modernisierung mit Einmalzahlung planen. Tarif: CASH 5 · BSS 90.000 €. Frage: Einmalzahlung und Auszahlungsplan?`, back: `Einmalzahlung: 90.000 € × 12 % = 10.800 €
+Auszahlungen: 5 × 18.000 € über 15 Jahre` },
+          { front: `Familie Gold (44/42): Ratenmodell für laufende Sanierung. Tarif: CASH 3 · BSS 40.000 €. Frage: Mindestsparrate und Auszahlungsplan?`, back: `Mindestsparrate: 40.000 € × 2 ‰ = 80 €/Monat
+Auszahlungen: 3 × 13.333 €` },
+          { front: `Herr Grau (63): möchte Spar- und Darlehensphase seines Vertrags vergleichen. Tarif: KOMFORT (Niedrige Rate) · BSS 55.000 €. Frage: Regelsparbeitrag und Monatsrate in der Darlehensphase?`, back: `Regelsparbeitrag: 55.000 € × 3 ‰ = 165 €/Monat
+Monatsrate: 55.000 € × 3,5 ‰ = 192,50 €/Monat` },
+          { front: `Familie Bunt (38/36): sparen mit dem Regelbeitrag bei großer Summe. Tarif: PREMIUM · BSS 130.000 €. Frage: Regelsparbeitrag und Zuteilungszeit?`, back: `Regelsparbeitrag: 130.000 € × 5 ‰ = 650 €/Monat
+Zuteilung: 52.000 € ÷ 650 € = 80 Monate = 6 J. 8 M.` },
+        ]
+      },
+};
+    let currentSetId = null;
+    let cards = [];
+    let idx = 0;
+    let flipped = false;
+    let editing = -1;
+    const $ = id => document.getElementById(id);
+    function renderStartScreen() {
+      const grid = $('setsGrid');
+      grid.innerHTML = Object.entries(SETS).map(([id, s]) => `
+        <div class="set-card" onclick="startSet('${id}')">
+          <div class="set-num">${s.cards.length} Karten</div>
+          <div class="set-title">${escapeHtml(s.title)}</div>
+          <div class="set-subtitle">${escapeHtml(s.subtitle)}</div>
+          <div class="set-count">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+            Lernen
+          </div>
+        </div>
+      `).join('');
+    }
+    function startSet(setId) {
+      currentSetId = setId;
+      cards = [...SETS[setId].cards];
+      idx = 0; flipped = false; editing = -1;
+      $('startScreen').classList.add('hidden');
+      $('learnScreen').classList.add('active');
+      $('learnTitle').textContent = SETS[setId].title;
+      closeEditor();
+      render();
+    }
+    function backToSets() {
+      $('startScreen').classList.remove('hidden');
+      $('learnScreen').classList.remove('active');
+      currentSetId = null;
+      cards = []; idx = 0; flipped = false;
+    }
+    function render() {
+      const cardEl = $('card'), frontEl = $('frontText'), backEl = $('backText');
+      const counterEl = $('learnCounter'), progressEl = $('progress');
+      if (cards.length === 0) {
+        cardEl.style.display = 'none';
+        counterEl.textContent = '0 / 0';
+        progressEl.style.width = '0%';
+        $('btnPrev').disabled = true;
+        $('btnNext').disabled = true;
+        $('btnFlip').disabled = true;
+        renderList();
+        return;
+      }
+      cardEl.style.display = '';
+      flipped = false;
+      cardEl.classList.remove('flipped');
+      frontEl.textContent = cards[idx].front;
+      backEl.textContent = cards[idx].back;
+      counterEl.textContent = (idx + 1) + ' / ' + cards.length;
+      progressEl.style.width = ((idx + 1) / cards.length * 100) + '%';
+      $('btnPrev').disabled = idx === 0;
+      $('btnNext').disabled = idx === cards.length - 1;
+      $('btnFlip').disabled = false;
+      renderList();
+    }
+    function renderList() {
+      const body = $('listBody');
+      if (cards.length === 0) {
+        body.innerHTML = '<div style="text-align:center;padding:32px;color:var(--text-tertiary);font-size:14px;">Keine Karten in diesem Set.</div>';
+        return;
+      }
+      body.innerHTML = cards.map((c, i) => {
+        const isActive = i === idx;
+        return `<div class="list-item ${isActive ? 'active' : ''}" onclick="jumpTo(${i})">
+          <span class="list-item-num">${i+1}.</span>
+          <span class="list-item-text">${escapeHtml(c.front)}</span>
+          <div class="list-actions" onclick="event.stopPropagation()">
+            <button onclick="editCard(${i})" title="Bearbeiten">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </button>
+            <button class="delete" onclick="deleteCard(${i})" title="Löschen">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            </button>
+          </div>
+        </div>`;
+      }).join('');
+    }
+    function escapeHtml(t) { const d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
+    function flip() { if (cards.length === 0) return; flipped = !flipped; $('card').classList.toggle('flipped', flipped); }
+    function prev() { if (idx > 0) { idx--; render(); } }
+    function next() { if (idx < cards.length - 1) { idx++; render(); } }
+    function shuffle() { for (let i = cards.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [cards[i], cards[j]] = [cards[j], cards[i]]; } idx = 0; render(); }
+    function openEditor(isNew) {
+      editing = isNew ? -1 : idx;
+      $('editorTitle').textContent = isNew ? 'Neue Karte' : 'Karte bearbeiten';
+      $('inputFront').value = isNew ? '' : cards[idx].front;
+      $('inputBack').value = isNew ? '' : cards[idx].back;
+      $('editor').classList.add('open');
+      $('inputFront').focus();
+    }
+    function closeEditor() { $('editor').classList.remove('open'); editing = -1; }
+    function saveCard() {
+      const f = $('inputFront').value.trim(), b = $('inputBack').value.trim();
+      if (!f || !b) return;
+      if (editing === -1) { cards.push({ front: f, back: b }); idx = cards.length - 1; }
+      else { cards[editing] = { front: f, back: b }; }
+      closeEditor(); render();
+    }
+    function jumpTo(i) { idx = i; render(); $('scene').scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+    function editCard(i) { idx = i; render(); openEditor(false); }
+    function deleteCard(i) {
+      if (!confirm('Karte "' + cards[i].front.substring(0, 40) + (cards[i].front.length > 40 ? '...' : '') + '" wirklich löschen?')) return;
+      cards.splice(i, 1);
+      if (idx >= cards.length) idx = Math.max(0, cards.length - 1);
+      render();
+    }
+    $('card').addEventListener('click', flip);
+    $('btnFlip').addEventListener('click', flip);
+    $('btnPrev').addEventListener('click', prev);
+    $('btnNext').addEventListener('click', next);
+    $('btnShuffle').addEventListener('click', shuffle);
+    $('btnAdd').addEventListener('click', () => openEditor(true));
+    $('btnCancel').addEventListener('click', closeEditor);
+    $('btnSave').addEventListener('click', saveCard);
+    $('btnBackToSets').addEventListener('click', backToSets);
+    let listOpen = false;
+    $('listHeader').addEventListener('click', () => {
+      listOpen = !listOpen;
+      $('listBody').classList.toggle('open', listOpen);
+      $('listToggle').classList.toggle('open', listOpen);
+      $('listToggle').childNodes[0].textContent = listOpen ? 'Ausblenden ' : 'Anzeigen ';
+    });
+    document.addEventListener('keydown', e => {
+      if ($('editor').classList.contains('open')) {
+        if (e.key === 'Escape') closeEditor();
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') saveCard();
+        return;
+      }
+      if (!$('learnScreen').classList.contains('active')) return;
+      if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); flip(); }
+      if (e.key === 'ArrowLeft') prev();
+      if (e.key === 'ArrowRight') next();
+      if (e.key === 's' || e.key === 'S') shuffle();
+      if (e.key === 'Escape') backToSets();
+    });
+    renderStartScreen();
+  </script>
+</body>
+</html>
 
